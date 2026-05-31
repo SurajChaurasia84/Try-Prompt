@@ -158,6 +158,7 @@ class HomeTab extends StatelessWidget {
       onTap: () {},
       child: Container(
         margin: const EdgeInsets.only(right: 8),
+        alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
           color: isActive
