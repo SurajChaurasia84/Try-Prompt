@@ -65,7 +65,7 @@ class HomeTab extends StatelessWidget {
           children: [
             // 1. Horizontal scrollable list of chips
             SizedBox(
-              height: 48,
+              height: 36,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
@@ -154,21 +154,33 @@ class HomeTab extends StatelessWidget {
   Widget _buildCategoryChip(BuildContext context, String label, bool isActive) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      alignment: Alignment.center,
-      child: ChoiceChip(
-        label: Text(label),
-        selected: isActive,
-        selectedColor: primaryColor,
-        labelStyle: TextStyle(
-          color: isActive 
-              ? Colors.white 
-              : (isDark ? Colors.grey[300] : Colors.grey[700]),
-          fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+    return GestureDetector(
+      onTap: () {},
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive
+              ? primaryColor
+              : (isDark ? const Color(0xFF2A2A2A) : Colors.grey[200]),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isActive
+                ? primaryColor
+                : (isDark ? Colors.grey[700]! : Colors.grey[300]!),
+            width: 1,
+          ),
         ),
-        backgroundColor: isDark ? const Color(0xFF1F1F1F) : Colors.grey[200],
-        onSelected: (val) {},
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isActive
+                ? Colors.white
+                : (isDark ? Colors.grey[300] : Colors.grey[700]),
+            fontSize: 12,
+            fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+          ),
+        ),
       ),
     );
   }
