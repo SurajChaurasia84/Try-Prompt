@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'favorite_tab.dart';
+import '../app_info_screen.dart';
 
 class MenuTab extends StatelessWidget {
   final ThemeMode themeMode;
@@ -198,6 +199,14 @@ class MenuTab extends StatelessWidget {
                     icon: Icons.info_outline,
                     iconColor: Colors.blueGrey,
                     title: 'App Info',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AppInfoScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _buildSettingRow(
                     context,
@@ -261,7 +270,7 @@ class MenuTab extends StatelessWidget {
             // Version Indicator
             Center(
               child: Text(
-                'Try Prompt v1.0.0 (Beta)',
+                'v1.0.0',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.grey[500],
                     ),
