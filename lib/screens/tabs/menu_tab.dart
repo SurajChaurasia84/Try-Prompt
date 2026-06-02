@@ -29,33 +29,14 @@ class MenuTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Screen Title
-            Text(
-              'Menu & Settings',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 24),
-
-            // Profile Section
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1F1F1F) : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
+            // Profile Section (Centered, without background)
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   CircleAvatar(
-                    radius: 36,
+                    radius: 48,
                     backgroundColor: primaryColor.withValues(alpha: 0.1),
                     backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
                     child: photoUrl == null
@@ -64,59 +45,54 @@ class MenuTab extends StatelessWidget {
                             style: TextStyle(
                               color: primaryColor,
                               fontWeight: FontWeight.bold,
-                              fontSize: 24,
+                              fontSize: 32,
                             ),
                           )
                         : null,
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          displayName,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                  const SizedBox(height: 16),
+                  Text(
+                    displayName,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          email,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: isDark ? Colors.grey[400] : Colors.grey[600],
-                              ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    email,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
                         ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.amber[800]?.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: Colors.amber[800]!.withValues(alpha: 0.4),
-                              width: 1,
-                            ),
-                          ),
-                          child: Text(
-                            'PRO MEMBER',
-                            style: TextStyle(
-                              color: Colors.amber[800],
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.amber[800]?.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: Colors.amber[800]!.withValues(alpha: 0.4),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      'PRO MEMBER',
+                      style: TextStyle(
+                        color: Colors.amber[800],
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 36),
 
             // Settings Section Title
             Text(
