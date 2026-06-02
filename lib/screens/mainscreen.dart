@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/daily_tab.dart';
 import 'tabs/favorite_tab.dart';
@@ -31,7 +32,7 @@ class _MainScreenState extends State<MainScreen> {
       case 2:
         return 'Favorite Prompts';
       case 3:
-        return 'Menu & Settings';
+        return 'Menu';
       default:
         return 'Try Prompt';
     }
@@ -40,7 +41,9 @@ class _MainScreenState extends State<MainScreen> {
   String _getAppBarSubtitle() {
     switch (_currentIndex) {
       case 0:
-        return 'Welcome App';
+        final user = FirebaseAuth.instance.currentUser;
+        final firstName = user?.displayName?.trim().split(' ').first;
+        return 'Welcome, ${firstName ?? 'User'}';
       case 1:
         return 'Daily prompt template';
       case 2:
@@ -48,7 +51,7 @@ class _MainScreenState extends State<MainScreen> {
       case 3:
         return 'App settings and customization';
       default:
-        return 'Welcome App';
+        return 'Welcome';
     }
   }
 
@@ -77,7 +80,7 @@ class _MainScreenState extends State<MainScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlayStyle,
       child: Scaffold(
-      appBar: _currentIndex == 3 ? null : AppBar(
+      appBar: AppBar(
         systemOverlayStyle: overlayStyle,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,11 +105,13 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {},
-          ),
-          const SizedBox(width: 8),
+          if (_currentIndex != 3) ...[
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {},
+            ),
+            const SizedBox(width: 8),
+          ],
         ],
         backgroundColor: Colors.transparent,
         elevation: 0,
