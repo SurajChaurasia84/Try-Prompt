@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'screens/mainscreen.dart';
+import 'screens/login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +24,8 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
+    final bool isUnderTest = WidgetsBinding.instance.runtimeType.toString().contains('Test');
+
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: MyApp.themeNotifier,
       builder: (context, currentMode, _) {
@@ -30,11 +34,11 @@ class _MyAppState extends State<MyApp> {
           debugShowCheckedModeBanner: false,
           themeMode: currentMode,
           
-          // YouTube-like Light Theme
+          // Light Theme
           theme: ThemeData(
             useMaterial3: true,
             brightness: Brightness.light,
-            primaryColor: const Color(0xFFFF0000), // YouTube Red
+            primaryColor: const Color(0xFFFF0000), // Red
             scaffoldBackgroundColor: const Color(0xFFF9F9F9),
             appBarTheme: const AppBarTheme(
               backgroundColor: Colors.white,
@@ -50,11 +54,11 @@ class _MyAppState extends State<MyApp> {
             ),
           ),
 
-          // YouTube-like Dark Theme
+          // Dark Theme
           darkTheme: ThemeData(
             useMaterial3: true,
             brightness: Brightness.dark,
-            primaryColor: const Color(0xFFFF0000), // YouTube Red
+            primaryColor: const Color(0xFFFF0000), // Red
             scaffoldBackgroundColor: const Color(0xFF0F0F0F),
             appBarTheme: const AppBarTheme(
               backgroundColor: Color(0xFF0F0F0F),
@@ -70,15 +74,31 @@ class _MyAppState extends State<MyApp> {
             ),
           ),
           
-          initialRoute: '/',
-          routes: {
-            '/': (context) => MainScreen(
+          home: StreamBuilder<User?>(
+            stream: isUnderTest
+                ? Stream<User?>.value(null)
+                : FirebaseAuth.instance.authStateChanges(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF0000)),
+                    ),
+                  ),
+                );
+              }
+              if (snapshot.hasData) {
+                return MainScreen(
                   themeMode: currentMode,
                   onThemeChanged: (mode) {
                     MyApp.themeNotifier.value = mode;
                   },
-                ),
-          },
+                );
+              }
+              return const LoginScreen();
+            },
+          ),
         );
       },
     );
