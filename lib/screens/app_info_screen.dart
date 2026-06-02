@@ -118,10 +118,45 @@ class AppInfoScreen extends StatelessWidget {
                               label: 'Build',
                               value: '1',
                             ),
-                            _buildInfoRow(
-                              context,
-                              label: 'Report a Bug',
-                              value: 'support@tryprompt.com',
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Report Bug Card
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1F1F1F) : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.02),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Report a Bug',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.grey[300] : Colors.grey[700],
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'tryprompt.app@gmail.com',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                              ),
                             ),
                           ],
                         ),
