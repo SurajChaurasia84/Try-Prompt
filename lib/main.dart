@@ -15,7 +15,7 @@ class MyApp extends StatefulWidget {
 
   // Global static notifier to change themes from anywhere in the app
   static final ValueNotifier<ThemeMode> themeNotifier = 
-      ValueNotifier<ThemeMode>(ThemeMode.dark);
+      ValueNotifier<ThemeMode>(ThemeMode.system);
 
   @override
   State<MyApp> createState() => _MyAppState();
