@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'favorite_tab.dart';
 import '../app_info_screen.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MenuTab extends StatelessWidget {
   final ThemeMode themeMode;
@@ -182,12 +183,66 @@ class MenuTab extends StatelessWidget {
                     icon: Icons.privacy_tip_outlined,
                     iconColor: Colors.teal,
                     title: 'Privacy Policy',
+                    onTap: () async {
+                      final Uri url = Uri.parse('https://tryprompt.app/privacy');
+                      try {
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Could not open Privacy Policy link.'),
+                              ),
+                            );
+                          }
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error opening link: $e'),
+                            ),
+                          );
+                        }
+                      }
+                    },
                   ),
                   _buildSettingRow(
                     context,
                     icon: Icons.help_outline,
                     iconColor: Colors.orange,
                     title: 'Help & Support',
+                    onTap: () async {
+                      final Uri emailLaunchUri = Uri(
+                        scheme: 'mailto',
+                        path: 'tryprompt.app@gmail.com',
+                        queryParameters: {
+                          'subject': 'Support Request - Try Prompt App',
+                        },
+                      );
+                      try {
+                        if (await canLaunchUrl(emailLaunchUri)) {
+                          await launchUrl(emailLaunchUri);
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Could not open email client.'),
+                              ),
+                            );
+                          }
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error opening email client: $e'),
+                            ),
+                          );
+                        }
+                      }
+                    },
                   ),
                   _buildSettingRow(
                     context,
