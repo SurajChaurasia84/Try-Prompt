@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class MenuTab extends StatelessWidget {
   final ThemeMode themeMode;
@@ -14,6 +16,11 @@ class MenuTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
+
+    final user = FirebaseAuth.instance.currentUser;
+    final displayName = user?.displayName ?? 'Try Prompt User';
+    final email = user?.email ?? 'premium.user@tryprompts.com';
+    final photoUrl = user?.photoURL;
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -50,14 +57,17 @@ class MenuTab extends StatelessWidget {
                   CircleAvatar(
                     radius: 36,
                     backgroundColor: primaryColor.withValues(alpha: 0.1),
-                    child: Text(
-                      'TP',
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 24,
-                      ),
-                    ),
+                    backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
+                    child: photoUrl == null
+                        ? Text(
+                            displayName.isNotEmpty ? displayName.substring(0, 1).toUpperCase() : 'T',
+                            style: TextStyle(
+                              color: primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 24,
+                            ),
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -65,14 +75,14 @@ class MenuTab extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Try Prompt User',
+                          displayName,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'premium.user@tryprompts.com',
+                          email,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: isDark ? Colors.grey[400] : Colors.grey[600],
                               ),
@@ -241,6 +251,17 @@ class MenuTab extends StatelessWidget {
                     iconColor: Colors.orange,
                     title: 'Help Center & Feedback',
                   ),
+                  const Divider(height: 1, indent: 56),
+                  _buildSettingRow(
+                    context,
+                    icon: Icons.logout,
+                    iconColor: Colors.red,
+                    title: 'Logout / Sign Out',
+                    onTap: () async {
+                      await GoogleSignIn().signOut();
+                      await FirebaseAuth.instance.signOut();
+                    },
+                  ),
                 ],
               ),
             ),
@@ -266,6 +287,7 @@ class MenuTab extends StatelessWidget {
     required IconData icon,
     required Color iconColor,
     required String title,
+    VoidCallback? onTap,
   }) {
     return ListTile(
       leading: Container(
@@ -289,7 +311,7 @@ class MenuTab extends StatelessWidget {
         color: Colors.grey,
         size: 20,
       ),
-      onTap: () {},
+      onTap: onTap,
     );
   }
 }
