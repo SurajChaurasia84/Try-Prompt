@@ -66,29 +66,6 @@ class MenuTab extends StatelessWidget {
                           color: isDark ? Colors.grey[400] : Colors.grey[600],
                         ),
                   ),
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.amber[800]?.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: Colors.amber[800]!.withValues(alpha: 0.4),
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      'PRO MEMBER',
-                      style: TextStyle(
-                        color: Colors.amber[800],
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -148,36 +125,6 @@ class MenuTab extends StatelessWidget {
                       },
                     ),
                   ),
-                  const Divider(height: 1, indent: 56),
-                  
-                  // Notifications Switch
-                  ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.notifications,
-                        color: Colors.red,
-                        size: 20,
-                      ),
-                    ),
-                    title: const Text(
-                      'Daily Reminders',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: const Text(
-                      'Notify me of daily prompt updates',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    trailing: Switch(
-                      value: true,
-                      activeTrackColor: primaryColor,
-                      onChanged: (bool value) {},
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -185,7 +132,7 @@ class MenuTab extends StatelessWidget {
 
             // More Options Title
             Text(
-              'Account & Support',
+              'Account & Settings',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -209,30 +156,51 @@ class MenuTab extends StatelessWidget {
                 children: [
                   _buildSettingRow(
                     context,
-                    icon: Icons.sync,
-                    iconColor: Colors.green,
-                    title: 'Sync Account Data',
+                    icon: Icons.person_outline,
+                    iconColor: Colors.blue,
+                    title: 'Profile',
                   ),
                   const Divider(height: 1, indent: 56),
                   _buildSettingRow(
                     context,
-                    icon: Icons.shield,
-                    iconColor: Colors.purple,
-                    title: 'Privacy & Permissions',
+                    icon: Icons.favorite_border,
+                    iconColor: Colors.pink,
+                    title: 'My Favourites',
+                  ),
+                  const Divider(height: 1, indent: 56),
+                  _buildSettingRow(
+                    context,
+                    icon: Icons.privacy_tip_outlined,
+                    iconColor: Colors.teal,
+                    title: 'Privacy Policy',
                   ),
                   const Divider(height: 1, indent: 56),
                   _buildSettingRow(
                     context,
                     icon: Icons.help_outline,
                     iconColor: Colors.orange,
-                    title: 'Help Center & Feedback',
+                    title: 'Help & Support',
+                  ),
+                  const Divider(height: 1, indent: 56),
+                  _buildSettingRow(
+                    context,
+                    icon: Icons.share_outlined,
+                    iconColor: Colors.indigo,
+                    title: 'Share App',
+                  ),
+                  const Divider(height: 1, indent: 56),
+                  _buildSettingRow(
+                    context,
+                    icon: Icons.info_outline,
+                    iconColor: Colors.blueGrey,
+                    title: 'App Info',
                   ),
                   const Divider(height: 1, indent: 56),
                   _buildSettingRow(
                     context,
                     icon: Icons.logout,
                     iconColor: Colors.red,
-                    title: 'Logout / Sign Out',
+                    title: 'Logout',
                     onTap: () async {
                       await GoogleSignIn().signOut();
                       await FirebaseAuth.instance.signOut();
