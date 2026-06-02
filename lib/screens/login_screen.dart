@@ -238,21 +238,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               : Container(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(18),
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        const Color(0xFFFF0000).withValues(alpha: 0.4), // Low opacity red
-                                        Colors.white.withValues(alpha: 0.15),           // Low opacity white
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
+                                    color: Theme.of(context).primaryColor.withValues(alpha: isDark ? 0.15 : 0.08),
                                     border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.1),
-                                      width: 1,
+                                      color: Theme.of(context).primaryColor.withValues(alpha: isDark ? 0.3 : 0.4),
+                                      width: 1.5,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFFFF0000).withValues(alpha: 0.1),
+                                        color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
                                         blurRadius: 8,
                                         offset: const Offset(0, 4),
                                       ),
@@ -260,7 +253,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                   ),
                                   child: Material(
                                     color: Colors.transparent,
-                                                                   child: InkWell(
+                                                                  child: InkWell(
                                       onTap: _signInWithGoogle,
                                       borderRadius: BorderRadius.circular(18),
                                       child: Row(
@@ -281,12 +274,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                             ),
                                           ),
                                           const SizedBox(width: 12),
-                                          const Text(
+                                          Text(
                                             'Continue with Google',
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
-                                              color: Colors.white,
+                                              color: isDark ? Colors.white : Theme.of(context).primaryColor,
                                             ),
                                           ),
                                         ],
@@ -536,8 +529,8 @@ class _PromptFeatureShowcaseState extends State<PromptFeatureShowcase>
                           // Glowing Center Gradient (mimicking AI content)
                           Center(
                             child: Container(
-                              width: _imageSize.value * 0.6,
-                              height: _imageSize.value * 0.6,
+                              width: _imageSize.value * 0.8,
+                              height: _imageSize.value * 0.8,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 gradient: RadialGradient(
@@ -553,7 +546,7 @@ class _PromptFeatureShowcaseState extends State<PromptFeatureShowcase>
                           Center(
                             child: Icon(
                               Icons.psychology_outlined,
-                              size: _imageSize.value * 0.45,
+                              size: _imageSize.value * 0.65,
                               color: primaryColor.withValues(alpha: 0.85),
                             ),
                           ),
