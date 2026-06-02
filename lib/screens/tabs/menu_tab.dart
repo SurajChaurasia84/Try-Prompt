@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'favorite_tab.dart';
 import '../app_info_screen.dart';
+import '../profile_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -163,6 +164,14 @@ class MenuTab extends StatelessWidget {
                     icon: Icons.person_outline,
                     iconColor: Colors.blue,
                     title: 'Profile',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProfileScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _buildSettingRow(
                     context,
