@@ -88,7 +88,7 @@ class _MyAppState extends State<MyApp> {
           home: StreamBuilder<User?>(
             stream: isUnderTest
                 ? Stream<User?>.value(null)
-                : FirebaseAuth.instance.authStateChanges(),
+                : FirebaseAuth.instance.userChanges(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Scaffold(
