@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'favorite_tab.dart';
 import '../app_info_screen.dart';
+import 'package:share_plus/share_plus.dart';
 
 class MenuTab extends StatelessWidget {
   final ThemeMode themeMode;
@@ -193,6 +194,14 @@ class MenuTab extends StatelessWidget {
                     icon: Icons.share_outlined,
                     iconColor: Colors.indigo,
                     title: 'Share App',
+                    onTap: () {
+                      SharePlus.instance.share(
+                        ShareParams(
+                          text: 'Hey! Check out Try Prompt - the ultimate AI prompt generator and template manager! 🚀\n\nDownload the app now: https://play.google.com/store/apps/details?id=com.tryprompts.apps',
+                          subject: 'Try Prompt App',
+                        ),
+                      );
+                    },
                   ),
                   _buildSettingRow(
                     context,
