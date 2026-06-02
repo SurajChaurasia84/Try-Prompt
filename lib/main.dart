@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'screens/mainscreen.dart';
@@ -45,6 +46,11 @@ class _MyAppState extends State<MyApp> {
               foregroundColor: Color(0xFF0F0F0F),
               elevation: 0,
               surfaceTintColor: Colors.transparent,
+              systemOverlayStyle: SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.dark,
+                statusBarBrightness: Brightness.light,
+              ),
             ),
             colorScheme: const ColorScheme.light(
               primary: Color(0xFFFF0000),
@@ -65,6 +71,11 @@ class _MyAppState extends State<MyApp> {
               foregroundColor: Colors.white,
               elevation: 0,
               surfaceTintColor: Colors.transparent,
+              systemOverlayStyle: SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.light,
+                statusBarBrightness: Brightness.dark,
+              ),
             ),
             colorScheme: const ColorScheme.dark(
               primary: Color(0xFFFF0000),
