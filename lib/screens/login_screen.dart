@@ -235,39 +235,63 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                     valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF0000)),
                                   ),
                                 )
-                              : ElevatedButton(
-                                  onPressed: _signInWithGoogle,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: isDark ? const Color(0xFF1F1F1F) : Colors.white,
-                                    foregroundColor: isDark ? Colors.white : Colors.black87,
-                                    elevation: 2,
-                                    shadowColor: Colors.black.withValues(alpha: 0.15),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18),
-                                      side: BorderSide(
-                                        color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                                        width: 1,
-                                      ),
+                              : Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(18),
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        const Color(0xFFFF0000).withValues(alpha: 0.4), // Low opacity red
+                                        Colors.white.withValues(alpha: 0.15),           // Low opacity white
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
                                     ),
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      // Custom Painted Google Logo
-                                      CustomPaint(
-                                        size: const Size(20, 20),
-                                        painter: GoogleGLogoPainter(),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      const Text(
-                                        'Continue with Google',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.1),
+                                      width: 1,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFFF0000).withValues(alpha: 0.1),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
                                       ),
                                     ],
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                                                   child: InkWell(
+                                      onTap: _signInWithGoogle,
+                                      borderRadius: BorderRadius.circular(18),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          // White circular badge containing the Google G Logo
+                                          Container(
+                                            padding: const EdgeInsets.all(5),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Image.asset(
+                                              'assets/g.png',
+                                              width: 18,
+                                              height: 18,
+                                              fit: BoxFit.contain,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          const Text(
+                                            'Continue with Google',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
                         ),
@@ -294,111 +318,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   }
 }
 
-// Draw Google "G" logo precisely using standard Flutter Canvas
-class GoogleGLogoPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double w = size.width;
-    final double h = size.height;
 
-    final Paint paint = Paint()..style = PaintingStyle.fill;
-
-    // Define the inner circle path (to hollow out the center)
-    final Path innerCircle = Path()
-      ..addOval(Rect.fromCircle(center: Offset(w * 0.5, h * 0.5), radius: w * 0.28));
-
-    // Define the top right cutout path (above the horizontal crossbar)
-    final Path clearPath = Path()
-      ..moveTo(w * 0.5, h * 0.5)
-      ..lineTo(w * 0.95, h * 0.5)
-      ..lineTo(w * 0.95, h * 0.15)
-      ..close();
-
-    // Combine them into a single path to exclude
-    final Path excludePath = Path()
-      ..addPath(innerCircle, Offset.zero)
-      ..addPath(clearPath, Offset.zero);
-
-    // Create the outer boundary path (the whole canvas area)
-    final Path outerRect = Path()
-      ..addRect(Rect.fromLTWH(0, 0, w, h));
-
-    // The clip path is everything in outerRect EXCEPT the excludePath
-    final Path clipPath = Path.combine(
-      PathOperation.difference,
-      outerRect,
-      excludePath,
-    );
-
-    canvas.save();
-    canvas.clipPath(clipPath);
-
-    // Google red color arc
-    paint.color = const Color(0xFFEA4335);
-    final Path redPath = Path()
-      ..moveTo(w * 0.5, h * 0.5)
-      ..relativeLineTo(-w * 0.35, -h * 0.35)
-      ..arcTo(
-        Rect.fromLTWH(0, 0, w, h),
-        -2.356, // starting angle in rad (-135 deg)
-        1.57,  // sweep angle in rad (90 deg)
-        false,
-      )
-      ..lineTo(w * 0.5, h * 0.5);
-    canvas.drawPath(redPath, paint);
-
-    // Google yellow color arc
-    paint.color = const Color(0xFFFBBC05);
-    final Path yellowPath = Path()
-      ..moveTo(w * 0.5, h * 0.5)
-      ..relativeLineTo(-w * 0.35, h * 0.35)
-      ..arcTo(
-        Rect.fromLTWH(0, 0, w, h),
-        2.356, // starting angle in rad (135 deg)
-        -1.57, // sweep angle in rad (-90 deg)
-        false,
-      )
-      ..lineTo(w * 0.5, h * 0.5);
-    canvas.drawPath(yellowPath, paint);
-
-    // Google green color arc
-    paint.color = const Color(0xFF34A853);
-    final Path greenPath = Path()
-      ..moveTo(w * 0.5, h * 0.5)
-      ..relativeLineTo(w * 0.35, h * 0.35)
-      ..arcTo(
-        Rect.fromLTWH(0, 0, w, h),
-        0.785, // starting angle in rad (45 deg)
-        1.571, // sweep angle in rad (90 deg)
-        false,
-      )
-      ..lineTo(w * 0.5, h * 0.5);
-    canvas.drawPath(greenPath, paint);
-
-    // Google blue color arc & center cross-bar
-    paint.color = const Color(0xFF4285F4);
-    final Path bluePath = Path()
-      ..moveTo(w * 0.5, h * 0.5)
-      ..relativeLineTo(w * 0.35, -h * 0.35)
-      ..arcTo(
-        Rect.fromLTWH(0, 0, w, h),
-        -0.785, // starting angle in rad (-45 deg)
-        1.57,  // sweep angle in rad (90 deg)
-        false,
-      )
-      ..lineTo(w * 0.5, h * 0.5)
-      ..lineTo(w * 0.95, h * 0.5)
-      ..lineTo(w * 0.95, h * 0.6)
-      ..lineTo(w * 0.5, h * 0.6)
-      ..close();
-    canvas.drawPath(bluePath, paint);
-
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
 
 // ==========================================
 // Prompt Showcase & Feature Animation
