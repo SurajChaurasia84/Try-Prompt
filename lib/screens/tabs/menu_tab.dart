@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'favorite_tab.dart';
 
 class MenuTab extends StatelessWidget {
   final ThemeMode themeMode;
@@ -160,50 +161,96 @@ class MenuTab extends StatelessWidget {
                     iconColor: Colors.blue,
                     title: 'Profile',
                   ),
-                  const Divider(height: 1, indent: 56),
                   _buildSettingRow(
                     context,
                     icon: Icons.favorite_border,
                     iconColor: Colors.pink,
                     title: 'My Favourites',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const FavoriteTab(isScreen: true),
+                        ),
+                      );
+                    },
                   ),
-                  const Divider(height: 1, indent: 56),
                   _buildSettingRow(
                     context,
                     icon: Icons.privacy_tip_outlined,
                     iconColor: Colors.teal,
                     title: 'Privacy Policy',
                   ),
-                  const Divider(height: 1, indent: 56),
                   _buildSettingRow(
                     context,
                     icon: Icons.help_outline,
                     iconColor: Colors.orange,
                     title: 'Help & Support',
                   ),
-                  const Divider(height: 1, indent: 56),
                   _buildSettingRow(
                     context,
                     icon: Icons.share_outlined,
                     iconColor: Colors.indigo,
                     title: 'Share App',
                   ),
-                  const Divider(height: 1, indent: 56),
                   _buildSettingRow(
                     context,
                     icon: Icons.info_outline,
                     iconColor: Colors.blueGrey,
                     title: 'App Info',
                   ),
-                  const Divider(height: 1, indent: 56),
                   _buildSettingRow(
                     context,
                     icon: Icons.logout,
                     iconColor: Colors.red,
                     title: 'Logout',
-                    onTap: () async {
-                      await GoogleSignIn().signOut();
-                      await FirebaseAuth.instance.signOut();
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          final isDark = Theme.of(context).brightness == Brightness.dark;
+                          return AlertDialog(
+                            backgroundColor: isDark ? const Color(0xFF1F1F1F) : Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            title: const Text(
+                              'Logout',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            content: const Text(
+                              'Are you sure you want to log out from Try Prompt?',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: Text(
+                                  'Cancel',
+                                  style: TextStyle(
+                                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  Navigator.pop(context); // Close the dialog
+                                  await GoogleSignIn().signOut();
+                                  await FirebaseAuth.instance.signOut();
+                                },
+                                child: const Text(
+                                  'Logout',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      );
                     },
                   ),
                 ],
