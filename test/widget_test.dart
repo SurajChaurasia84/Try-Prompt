@@ -6,10 +6,11 @@ void main() {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const MyApp());
     
-    // Let the stream builder resolve the mock stream
+    // Let the app render
     await tester.pump();
 
-    // Verify that the LoginScreen renders (contains 'Try Prompt' title)
-    expect(find.text('Try Prompt'), findsWidgets);
+    // Verify that the MainScreen renders (contains 'Try Prompt AI Image' title)
+    expect(find.text('Try Prompt AI Image'), findsOneWidget);
+    expect(find.text('Home'), findsOneWidget);
   });
 }
