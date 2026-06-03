@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/daily_tab.dart';
 import 'tabs/favorite_tab.dart';
@@ -41,9 +40,7 @@ class _MainScreenState extends State<MainScreen> {
   String _getAppBarSubtitle() {
     switch (_currentIndex) {
       case 0:
-        final user = FirebaseAuth.instance.currentUser;
-        final firstName = user?.displayName?.trim().split(' ').first;
-        return 'Welcome, ${firstName ?? 'User'}';
+        return 'Welcome App';
       case 1:
         return 'Daily prompt template';
       case 2:
