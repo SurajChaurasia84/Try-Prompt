@@ -102,7 +102,23 @@ class _MainScreenState extends State<MainScreen> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlayStyle,
-      child: Scaffold(
+      child: PopScope(
+        canPop: _currentIndex == 0 && !_isSearching,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          
+          if (_isSearching) {
+            _stopSearch();
+            return;
+          }
+          
+          if (_currentIndex != 0) {
+            setState(() {
+              _currentIndex = 0;
+            });
+          }
+        },
+        child: Scaffold(
         appBar: _currentIndex == 3
             ? null
             : AppBar(
@@ -214,6 +230,7 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 
