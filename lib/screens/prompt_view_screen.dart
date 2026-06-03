@@ -271,34 +271,47 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
               children: [
                 // ── Image ──
                 if (imageUrl.isNotEmpty) ...[
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: AspectRatio(
-                      aspectRatio: 1.0,
-                      child: Image.network(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (ctx, child, progress) {
-                          if (progress == null) return child;
-                          return Container(
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ImagePreviewScreen(
+                            imageUrl: imageUrl,
+                            title: title,
+                          ),
+                        ),
+                      );
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: AspectRatio(
+                        aspectRatio: 1.0,
+                        child: Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (ctx, child, progress) {
+                            if (progress == null) return child;
+                            return Container(
+                              color: isDark
+                                  ? const Color(0xFF2A2A2A)
+                                  : Colors.grey[200],
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Color(0xFFFF0000)),
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (ctx, err, st) => Container(
                             color: isDark
                                 ? const Color(0xFF2A2A2A)
                                 : Colors.grey[200],
                             child: const Center(
-                              child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                    Color(0xFFFF0000)),
-                              ),
+                              child: Icon(Icons.broken_image_outlined,
+                                  size: 48, color: Colors.grey),
                             ),
-                          );
-                        },
-                        errorBuilder: (ctx, err, st) => Container(
-                          color: isDark
-                              ? const Color(0xFF2A2A2A)
-                              : Colors.grey[200],
-                          child: const Center(
-                            child: Icon(Icons.broken_image_outlined,
-                                size: 48, color: Colors.grey),
                           ),
                         ),
                       ),
@@ -752,6 +765,80 @@ class _SuggestionCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class ImagePreviewScreen extends StatelessWidget {
+  final String imageUrl;
+  final String title;
+
+  const ImagePreviewScreen({
+    super.key,
+    required this.imageUrl,
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          // Pinch-to-zoom interactive viewer
+          Center(
+            child: InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.contain,
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) return child;
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) => const Center(
+                  child: Icon(
+                    Icons.broken_image_outlined,
+                    color: Colors.white70,
+                    size: 64,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Top bar overlay with close icon and title
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 10,
+            left: 10,
+            right: 10,
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
