@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/history_service.dart';
+import '../services/favorites_service.dart';
+import 'prompt_view_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -30,23 +32,43 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
-  Future<void> _copyPrompt(CopiedPrompt entry) async {
-    await Clipboard.setData(ClipboardData(text: entry.prompt));
-    await HistoryService.saveToHistory(entry.prompt, imageUrl: entry.imageUrl);
-    await _loadHistory();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Prompt copied to clipboard!'),
-          duration: const Duration(seconds: 1),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+  Future<void> _navigateToPromptView(CopiedPrompt entry) async {
+    // Try to find the prompt in the cache
+    final cached = FavoritesService.getCachedPrompts().firstWhere(
+      (p) => p['prompt'] == entry.prompt,
+      orElse: () => <String, dynamic>{},
+    );
+
+    final Map<String, dynamic> data;
+    final String docId;
+
+    if (cached.isNotEmpty) {
+      docId = cached['docId'] as String;
+      data = Map<String, dynamic>.from(cached)
+        ..remove('docId')
+        ..remove('category');
+    } else {
+      // Construct fallback data
+      docId = 'history_${entry.prompt.hashCode}';
+      final promptWords = entry.prompt.trim().split(RegExp(r'\s+'));
+      final title = promptWords.take(4).join(' ') + (promptWords.length > 4 ? '...' : '');
+      data = {
+        'prompt': entry.prompt,
+        'imageUrl': entry.imageUrl,
+        'title': title,
+        'type': '',
+      };
     }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PromptViewScreen(data: data, docId: docId),
+      ),
+    );
+    _loadHistory();
   }
+
 
   Future<void> _deleteItem(CopiedPrompt entry) async {
     await HistoryService.deleteFromHistory(entry);
@@ -228,7 +250,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           _deleteItem(entry);
                         },
                         child: GestureDetector(
-                          onTap: () => _copyPrompt(entry),
+                          onTap: () => _navigateToPromptView(entry),
                           child: Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(12),
