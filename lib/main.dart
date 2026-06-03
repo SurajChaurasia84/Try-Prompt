@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'screens/mainscreen.dart';
-import 'screens/login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -85,29 +83,10 @@ class _MyAppState extends State<MyApp> {
             ),
           ),
           
-          home: StreamBuilder<User?>(
-            stream: isUnderTest
-                ? Stream<User?>.value(null)
-                : FirebaseAuth.instance.userChanges(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(
-                  body: Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF0000)),
-                    ),
-                  ),
-                );
-              }
-              if (snapshot.hasData) {
-                return MainScreen(
-                  themeMode: currentMode,
-                  onThemeChanged: (mode) {
-                    MyApp.themeNotifier.value = mode;
-                  },
-                );
-              }
-              return const LoginScreen();
+          home: MainScreen(
+            themeMode: currentMode,
+            onThemeChanged: (mode) {
+              MyApp.themeNotifier.value = mode;
             },
           ),
         );
