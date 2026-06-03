@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../prompt_view_screen.dart';
 import '../../services/favorites_service.dart';
+import '../category_prompts_screen.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -11,7 +12,7 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
-  String _activeFilter = 'All';
+  String _activeFilter = 'Trending';
   Set<String> _favorites = {};
 
   // All loaded docs cached here; re-fetch via key
@@ -229,20 +230,18 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
     }
 
     // Build category chip list
-    final Set<String> categorySet = {'All'};
+    final Set<String> categorySet = {'Trending'};
     for (final doc in _allDocs) {
       final type = doc['type'] as String?;
       if (type != null && type.isNotEmpty) categorySet.add(type);
     }
     final cats = categorySet.toList();
-    cats.remove('All');
+    cats.remove('Trending');
     cats.sort();
-    cats.insert(0, 'All');
+    cats.insert(0, 'Trending');
 
-    // Filter
-    final filtered = widget.activeFilter == 'All'
-        ? _allDocs
-        : _allDocs.where((d) => d['type'] == widget.activeFilter).toList();
+    // Filter (Home tab always displays all docs; chips are now navigators)
+    final filtered = _allDocs;
 
     return RefreshIndicator(
       color: const Color(0xFFFF0000),
@@ -263,7 +262,23 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
                   final cat = cats[index];
                   final isSelected = widget.activeFilter == cat;
                   return GestureDetector(
-                    onTap: () => widget.onFilterChange(cat),
+                    onTap: () {
+                      final categoryDocs = cat == 'Trending'
+                          ? _allDocs
+                          : _allDocs.where((d) => d['type'] == cat).toList();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CategoryPromptsScreen(
+                            categoryName: cat,
+                            docs: categoryDocs,
+                            favorites: widget.favorites,
+                            onToggleFavorite: widget.onToggleFavorite,
+                            onRefreshFavorites: widget.onRefreshFavorites,
+                          ),
+                        ),
+                      );
+                    },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       margin: const EdgeInsets.only(right: 8),
@@ -319,7 +334,7 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
                       ),
                     ),
                   )
-                : _PinterestGrid(
+                : PinterestGrid(
                     docs: filtered,
                     favorites: widget.favorites,
                     onToggleFavorite: widget.onToggleFavorite,
@@ -334,13 +349,13 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
 
 // ─── Pinterest two-column grid ────────────────────────────────────────────────
 
-class _PinterestGrid extends StatelessWidget {
+class PinterestGrid extends StatelessWidget {
   final List<Map<String, dynamic>> docs;
   final Set<String> favorites;
   final Future<void> Function(String docId) onToggleFavorite;
   final VoidCallback onRefreshFavorites;
 
-  const _PinterestGrid({
+  const PinterestGrid({
     required this.docs,
     required this.favorites,
     required this.onToggleFavorite,
@@ -371,7 +386,7 @@ class _PinterestGrid extends StatelessWidget {
                 Expanded(
                   child: Column(
                     children: left
-                        .map((doc) => _PromptCard(
+                        .map((doc) => PromptCard(
                               doc: doc,
                               isFavorite: favorites.contains(doc['docId']),
                               onToggleFavorite: onToggleFavorite,
@@ -384,7 +399,7 @@ class _PinterestGrid extends StatelessWidget {
                 Expanded(
                   child: Column(
                     children: right
-                        .map((doc) => _PromptCard(
+                        .map((doc) => PromptCard(
                               doc: doc,
                               isFavorite: favorites.contains(doc['docId']),
                               onToggleFavorite: onToggleFavorite,
@@ -404,13 +419,13 @@ class _PinterestGrid extends StatelessWidget {
 
 // ─── Individual card ──────────────────────────────────────────────────────────
 
-class _PromptCard extends StatelessWidget {
+class PromptCard extends StatelessWidget {
   final Map<String, dynamic> doc;
   final bool isFavorite;
   final Future<void> Function(String docId) onToggleFavorite;
   final VoidCallback onRefreshFavorites;
 
-  const _PromptCard({
+  const PromptCard({
     required this.doc,
     required this.isFavorite,
     required this.onToggleFavorite,
