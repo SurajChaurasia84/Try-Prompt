@@ -4,7 +4,8 @@ import '../../services/favorites_service.dart';
 import 'home_tab.dart';
 
 class DailyTab extends StatefulWidget {
-  const DailyTab({super.key});
+  final String searchQuery;
+  const DailyTab({super.key, this.searchQuery = ''});
 
   @override
   State<DailyTab> createState() => _DailyTabState();
@@ -157,7 +158,14 @@ class _DailyTabState extends State<DailyTab> {
       );
     }
 
-    if (_dailyDocs.isEmpty) {
+    final filteredDocs = widget.searchQuery.isEmpty
+        ? _dailyDocs
+        : _dailyDocs.where((doc) {
+            final title = doc['title']?.toString().toLowerCase() ?? '';
+            return title.contains(widget.searchQuery.toLowerCase());
+          }).toList();
+
+    if (filteredDocs.isEmpty) {
       return RefreshIndicator(
         color: const Color(0xFFFF0000),
         onRefresh: _loadDailyPrompts,
@@ -170,13 +178,13 @@ class _DailyTabState extends State<DailyTab> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.calendar_today_outlined,
+                  widget.searchQuery.isEmpty ? Icons.calendar_today_outlined : Icons.search_off_outlined,
                   size: 64,
                   color: isDark ? Colors.grey[700] : Colors.grey[400],
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'No Daily Templates Found',
+                  widget.searchQuery.isEmpty ? 'No Daily Templates Found' : 'No Results Found',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -186,7 +194,9 @@ class _DailyTabState extends State<DailyTab> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32.0),
                   child: Text(
-                    'Daily prompt templates will appear here as they are released.',
+                    widget.searchQuery.isEmpty
+                        ? 'Daily prompt templates will appear here as they are released.'
+                        : 'No prompts match your search query "${widget.searchQuery}".',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: isDark ? Colors.grey[600] : Colors.grey[400],
@@ -204,7 +214,7 @@ class _DailyTabState extends State<DailyTab> {
       color: const Color(0xFFFF0000),
       onRefresh: _loadDailyPrompts,
       child: PinterestGrid(
-        docs: _dailyDocs,
+        docs: filteredDocs,
         favorites: _favorites,
         onToggleFavorite: _toggleFavorite,
         onRefreshFavorites: _loadFavorites,
