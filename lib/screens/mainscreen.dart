@@ -21,6 +21,29 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = "";
+
+  void _startSearch() {
+    setState(() {
+      _isSearching = true;
+    });
+  }
+
+  void _stopSearch() {
+    setState(() {
+      _isSearching = false;
+      _searchController.clear();
+      _searchQuery = "";
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   String _getAppBarTitle() {
     switch (_currentIndex) {
@@ -57,9 +80,12 @@ class _MainScreenState extends State<MainScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final List<Widget> screens = [
-      const HomeTab(),
-      const DailyTab(),
-      FavoriteTab(isActive: _currentIndex == 2),
+      HomeTab(searchQuery: _searchQuery),
+      DailyTab(searchQuery: _searchQuery),
+      FavoriteTab(
+        isActive: _currentIndex == 2,
+        searchQuery: _searchQuery,
+      ),
       MenuTab(
         themeMode: widget.themeMode,
         onThemeChanged: widget.onThemeChanged,
@@ -77,75 +103,116 @@ class _MainScreenState extends State<MainScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlayStyle,
       child: Scaffold(
-      appBar: _currentIndex == 3 ? null : AppBar(
-        systemOverlayStyle: overlayStyle,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              _getAppBarTitle(),
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+        appBar: _currentIndex == 3
+            ? null
+            : AppBar(
+                systemOverlayStyle: overlayStyle,
+                leading: _isSearching
+                    ? IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: _stopSearch,
+                      )
+                    : null,
+                title: _isSearching
+                    ? TextField(
+                        controller: _searchController,
+                        autofocus: true,
+                        decoration: InputDecoration(
+                          hintText: 'Search prompts by title...',
+                          border: InputBorder.none,
+                          hintStyle: TextStyle(
+                            color: isDark ? Colors.grey[500] : Colors.grey[600],
+                            fontSize: 16,
+                          ),
+                        ),
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                          fontSize: 16,
+                        ),
+                        onChanged: (val) {
+                          setState(() {
+                            _searchQuery = val;
+                          });
+                        },
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _getAppBarTitle(),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _getAppBarSubtitle(),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? Colors.grey[400] : Colors.grey[600],
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                actions: [
+                  if (_currentIndex != 3) ...[
+                    if (_isSearching)
+                      IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchQuery = "";
+                          });
+                        },
+                      )
+                    else
+                      IconButton(
+                        icon: const Icon(Icons.search),
+                        onPressed: _startSearch,
+                      ),
+                    const SizedBox(width: 8),
+                  ],
+                ],
+                backgroundColor: Colors.transparent,
+                elevation: 0,
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              _getAppBarSubtitle(),
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          if (_currentIndex != 3) ...[
-            IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: () {},
-            ),
-            const SizedBox(width: 8),
-          ],
-        ],
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: SafeArea(
-        bottom: false,
-        child: IndexedStack(
-          index: _currentIndex,
-          children: screens,
-        ),
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F0F0F) : Colors.white,
-          border: Border(
-            top: BorderSide(
-              color: isDark ? Colors.grey[900]! : Colors.grey[200]!,
-              width: 1,
-            ),
+        body: SafeArea(
+          bottom: false,
+          child: IndexedStack(
+            index: _currentIndex,
+            children: screens,
           ),
         ),
-        padding: EdgeInsets.only(
-          top: 10,
-          bottom: MediaQuery.of(context).padding.bottom + 10,
-          left: 16,
-          right: 16,
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF0F0F0F) : Colors.white,
+            border: Border(
+              top: BorderSide(
+                color: isDark ? Colors.grey[900]! : Colors.grey[200]!,
+                width: 1,
+              ),
+            ),
+          ),
+          padding: EdgeInsets.only(
+            top: 10,
+            bottom: MediaQuery.of(context).padding.bottom + 10,
+            left: 16,
+            right: 16,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(0, Icons.home_outlined, Icons.home, 'Home'),
+              _buildNavItem(1, Icons.calendar_today_outlined, Icons.calendar_today, 'Daily'),
+              _buildNavItem(2, Icons.favorite_border, Icons.favorite, 'Favorite'),
+              _buildNavItem(3, Icons.grid_view_outlined, Icons.grid_view, 'Menu'),
+            ],
+          ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(0, Icons.home_outlined, Icons.home, 'Home'),
-            _buildNavItem(1, Icons.calendar_today_outlined, Icons.calendar_today, 'Daily'),
-            _buildNavItem(2, Icons.favorite_border, Icons.favorite, 'Favorite'),
-            _buildNavItem(3, Icons.grid_view_outlined, Icons.grid_view, 'Menu'),
-          ],
-        ),
-      ),
       ),
     );
   }
@@ -165,6 +232,7 @@ class _MainScreenState extends State<MainScreen> {
 
     return InkWell(
       onTap: () {
+        _stopSearch();
         setState(() {
           _currentIndex = index;
         });
