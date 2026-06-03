@@ -1,51 +1,137 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../services/favorites_service.dart';
+import '../prompt_view_screen.dart';
 
-class FavoriteTab extends StatelessWidget {
+class FavoriteTab extends StatefulWidget {
   final bool isScreen;
+  final bool isActive;
 
   const FavoriteTab({
     super.key,
     this.isScreen = false,
+    this.isActive = false,
   });
+
+  @override
+  State<FavoriteTab> createState() => _FavoriteTabState();
+}
+
+class _FavoriteTabState extends State<FavoriteTab> {
+  List<Map<String, dynamic>> _favoriteItems = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorites();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadFavorites();
+  }
+
+  @override
+  void didUpdateWidget(FavoriteTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) {
+      _loadFavorites();
+    }
+  }
+
+  Future<void> _loadFavorites() async {
+    try {
+      // 1. Get from local cache first for instant loading
+      final ids = await FavoritesService.getFavorites();
+      
+      // If we don't have any items yet and cache is not empty, show loading
+      if (_favoriteItems.isEmpty && ids.isNotEmpty) {
+        setState(() => _isLoading = true);
+      } else if (ids.isEmpty) {
+        setState(() {
+          _favoriteItems = [];
+          _isLoading = false;
+        });
+      }
+      
+      if (ids.isNotEmpty) {
+        await _fetchItemsForIds(ids);
+      }
+
+      // 2. Sync with Firestore in the background and reload if the IDs changed
+      final syncedIds = await FavoritesService.getFavorites(fetchFromFirestore: true);
+      if (syncedIds.length != ids.length || !syncedIds.containsAll(ids)) {
+        await _fetchItemsForIds(syncedIds);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _fetchItemsForIds(Set<String> ids) async {
+    if (ids.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _favoriteItems = [];
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collectionGroup('prompts')
+          .get();
+
+      final items = <Map<String, dynamic>>[];
+
+      for (final doc in snapshot.docs) {
+        if (ids.contains(doc.id)) {
+          final categoryId = doc.reference.parent.parent?.id ?? '';
+          items.add({
+            'docId': doc.id,
+            'category': categoryId,
+            ...doc.data(),
+          });
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _favoriteItems = items;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _removeFavorite(String docId) async {
+    await FavoritesService.toggleFavorite(docId);
+    await _loadFavorites();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Removed from Favorites'),
+          duration: const Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final body = _buildBody(isDark);
 
-    final emptyState = Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.favorite_border,
-            size: 64,
-            color: isDark ? Colors.grey[700] : Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No Favorites Saved',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0),
-            child: Text(
-              'Mark your preferred prompts as favorites to keep them easily accessible.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isDark ? Colors.grey[600] : Colors.grey[400],
-                  ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (isScreen) {
+    if (widget.isScreen) {
       return Scaffold(
         appBar: AppBar(
           title: Column(
@@ -54,10 +140,7 @@ class FavoriteTab extends StatelessWidget {
             children: [
               const Text(
                 'Favorite Prompts',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               const SizedBox(height: 2),
               Text(
@@ -73,9 +156,249 @@ class FavoriteTab extends StatelessWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
-        body: emptyState,
+        body: body,
       );
     }
-    return emptyState;
+    return body;
+  }
+
+  Widget _buildBody(bool isDark) {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF0000)),
+        ),
+      );
+    }
+
+    if (_favoriteItems.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.favorite_border,
+              size: 64,
+              color: isDark ? Colors.grey[700] : Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No Favorites Saved',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              child: Text(
+                'Tap the ❤️ on any prompt in the Home tab to save it here.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: isDark ? Colors.grey[600] : Colors.grey[400],
+                    ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Pinterest-style 2-column grid
+    final left = <Map<String, dynamic>>[];
+    final right = <Map<String, dynamic>>[];
+    for (var i = 0; i < _favoriteItems.length; i++) {
+      if (i.isEven) {
+        left.add(_favoriteItems[i]);
+      } else {
+        right.add(_favoriteItems[i]);
+      }
+    }
+
+    return RefreshIndicator(
+      color: const Color(0xFFFF0000),
+      onRefresh: _loadFavorites,
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+            sliver: SliverToBoxAdapter(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: left
+                          .map((item) => _FavCard(
+                                item: item,
+                                onRemove: _removeFavorite,
+                                onRefresh: _loadFavorites,
+                              ))
+                          .toList(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      children: right
+                          .map((item) => _FavCard(
+                                item: item,
+                                onRemove: _removeFavorite,
+                                onRefresh: _loadFavorites,
+                              ))
+                          .toList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Favorite card ────────────────────────────────────────────────────────────
+
+class _FavCard extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final Future<void> Function(String docId) onRemove;
+  final VoidCallback onRefresh;
+
+  const _FavCard({
+    required this.item,
+    required this.onRemove,
+    required this.onRefresh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
+    final docId = item['docId'] as String;
+    final title = (item['title'] as String?)?.trim() ?? '';
+    final imageUrl = (item['imageUrl'] as String?)?.trim() ?? '';
+
+    return GestureDetector(
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PromptViewScreen(
+              data: Map<String, dynamic>.from(item)..remove('docId'),
+              docId: docId,
+            ),
+          ),
+        );
+        onRefresh();
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1C1C1C) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Image ──
+            if (imageUrl.isNotEmpty)
+              AspectRatio(
+                aspectRatio: 3 / 4,
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (ctx, child, progress) {
+                    if (progress == null) return child;
+                    return Container(
+                      color: isDark
+                          ? const Color(0xFF2A2A2A)
+                          : Colors.grey[100],
+                      child: const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFFFF0000)),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  errorBuilder: (ctx, err, st) => Container(
+                    color: isDark
+                        ? const Color(0xFF2A2A2A)
+                        : Colors.grey[200],
+                    height: 120,
+                    child: const Center(
+                      child: Icon(Icons.broken_image_outlined,
+                          color: Colors.grey, size: 28),
+                    ),
+                  ),
+                ),
+              )
+            else
+              Container(
+                height: 120,
+                color:
+                    isDark ? const Color(0xFF2A2A2A) : Colors.grey[200],
+                child: const Center(
+                  child: Icon(Icons.image_outlined,
+                      color: Colors.grey, size: 28),
+                ),
+              ),
+
+            // ── Title + Remove heart ──
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title.isNotEmpty ? title : 'Untitled',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? Colors.grey[200]
+                            : const Color(0xFF1A1A1A),
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => onRemove(docId),
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: Icon(
+                        Icons.favorite,
+                        size: 18,
+                        color: primaryColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
