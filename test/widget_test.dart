@@ -6,7 +6,9 @@ void main() {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const MyApp());
     
-    // Let the app render
+    // Wait for splash screen animations and navigation to complete
+    await tester.pump(const Duration(milliseconds: 2500));
+    await tester.pump(const Duration(milliseconds: 500));
     await tester.pump();
 
     // Verify that the MainScreen renders (contains 'Try Prompt AI Image' title)
