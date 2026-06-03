@@ -77,7 +77,7 @@ class _MainScreenState extends State<MainScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlayStyle,
       child: Scaffold(
-      appBar: AppBar(
+      appBar: _currentIndex == 3 ? null : AppBar(
         systemOverlayStyle: overlayStyle,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
