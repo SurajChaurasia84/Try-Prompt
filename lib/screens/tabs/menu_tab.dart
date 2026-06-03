@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'favorite_tab.dart';
 import '../developer_info_screen.dart';
+import '../history_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -85,10 +86,10 @@ class MenuTab extends StatelessWidget {
                     icon: Icons.history,
                     title: 'History',
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('History feature coming soon!'),
-                          behavior: SnackBarBehavior.floating,
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HistoryScreen(),
                         ),
                       );
                     },
