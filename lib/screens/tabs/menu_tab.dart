@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'favorite_tab.dart';
-import '../app_info_screen.dart';
+import '../developer_info_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -22,176 +22,83 @@ class MenuTab extends StatelessWidget {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.fromLTRB(24.0, 56.0, 24.0, 32.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // App Branding Section (Centered, Premium Glassmorphism-style design)
+            // Centered App Logo
             Center(
               child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                width: 90,
+                height: 90,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isDark
-                        ? [const Color(0xFF1F1F1F), const Color(0xFF151515)]
-                        : [Colors.white, const Color(0xFFF9F9F9)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
-                    width: 1,
-                  ),
+                  borderRadius: BorderRadius.circular(22),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+                      color: primaryColor.withValues(alpha: isDark ? 0.3 : 0.1),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
                     ),
                   ],
+                  border: Border.all(
+                    color: primaryColor.withValues(alpha: 0.3),
+                    width: 2,
+                  ),
                 ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: primaryColor.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.asset(
+                    'assets/icon.jpeg',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: primaryColor,
+                      child: const Icon(
                         Icons.rocket_launch,
-                        color: primaryColor,
+                        color: Colors.white,
                         size: 40,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Try Prompt AI',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Unlock your creative AI power completely free',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: isDark ? Colors.grey[400] : Colors.grey[600],
-                          ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 36),
+            const SizedBox(height: 40),
 
-            // Settings Section Title
-            Text(
-              'App Customization',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 12),
-
-            // Customization Options Card
+            // Card 1
             Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1F1F1F) : Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 8,
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                    blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: Column(
                 children: [
-                  // Dark Mode Switch
-                  ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.dark_mode,
-                        color: Colors.blue,
-                        size: 20,
-                      ),
-                    ),
-                    title: const Text(
-                      'Dark Mode',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Text(
-                      isDark ? 'Dark theme enabled' : 'Light theme enabled',
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    trailing: Switch(
-                      value: isDark,
-                      activeTrackColor: primaryColor,
-                      onChanged: (bool value) {
-                        onThemeChanged(value ? ThemeMode.dark : ThemeMode.light);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 28),
-
-            // More Options Title
-            Text(
-              'Account & Settings',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 12),
-
-            // Support Settings List
-            Container(
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1F1F1F) : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  _buildSettingRow(
+                  _buildMenuRow(
                     context,
-                    icon: Icons.favorite_border,
-                    iconColor: Colors.pink,
-                    title: 'My Favourites',
+                    icon: Icons.history,
+                    title: 'History',
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const FavoriteTab(isScreen: true),
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('History feature coming soon!'),
+                          behavior: SnackBarBehavior.floating,
                         ),
                       );
                     },
                   ),
-                  _buildSettingRow(
+                  _buildMenuRow(
                     context,
-                    icon: Icons.privacy_tip_outlined,
-                    iconColor: Colors.teal,
-                    title: 'Privacy Policy',
+                    icon: Icons.person_outline,
+                    title: 'Follow Me',
                     onTap: () async {
-                      final Uri url = Uri.parse('https://tryprompt.app/privacy');
+                      final Uri url = Uri.parse('https://instagram.com/tryprompt');
                       try {
                         if (await canLaunchUrl(url)) {
                           await launchUrl(url, mode: LaunchMode.externalApplication);
@@ -199,7 +106,7 @@ class MenuTab extends StatelessWidget {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Could not open Privacy Policy link.'),
+                                content: Text('Could not open follow link.'),
                               ),
                             );
                           }
@@ -208,18 +115,109 @@ class MenuTab extends StatelessWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Error opening link: $e'),
+                              content: Text('Error: $e'),
                             ),
                           );
                         }
                       }
                     },
                   ),
-                  _buildSettingRow(
+                  _buildMenuRow(
                     context,
-                    icon: Icons.help_outline,
-                    iconColor: Colors.orange,
-                    title: 'Help & Support',
+                    icon: Icons.play_circle_outline,
+                    title: 'How to use?',
+                    onTap: () async {
+                      final Uri url = Uri.parse('https://youtube.com');
+                      try {
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Could not open tutorial link.'),
+                              ),
+                            );
+                          }
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error: $e'),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                  _buildMenuRow(
+                    context,
+                    icon: Icons.share_outlined,
+                    title: 'Share The app',
+                    onTap: () {
+                      SharePlus.instance.share(
+                        ShareParams(
+                          text: 'Hey! Check out Try Prompt - the ultimate AI prompt generator and template manager! 🚀\n\nDownload the app now: https://play.google.com/store/apps/details?id=com.tryprompts.apps',
+                          subject: 'Try Prompt App',
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Card 2
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1F1F1F) : Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  _buildMenuRow(
+                    context,
+                    icon: Icons.star_border,
+                    title: 'Rate Us',
+                    onTap: () async {
+                      final Uri url = Uri.parse('https://play.google.com/store/apps/details?id=com.tryprompts.apps');
+                      try {
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Could not open rating link.'),
+                              ),
+                            );
+                          }
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error: $e'),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                  _buildMenuRow(
+                    context,
+                    icon: Icons.chat_bubble_outline,
+                    title: 'Contact Us',
                     onTap: () async {
                       final Uri emailLaunchUri = Uri(
                         scheme: 'mailto',
@@ -244,53 +242,68 @@ class MenuTab extends StatelessWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Error opening email client: $e'),
+                              content: Text('Error: $e'),
                             ),
                           );
                         }
                       }
                     },
                   ),
-                  _buildSettingRow(
+                  _buildMenuRow(
                     context,
-                    icon: Icons.share_outlined,
-                    iconColor: Colors.indigo,
-                    title: 'Share App',
-                    onTap: () {
-                      SharePlus.instance.share(
-                        ShareParams(
-                          text: 'Hey! Check out Try Prompt - the ultimate AI prompt generator and template manager! 🚀\n\nDownload the app now: https://play.google.com/store/apps/details?id=com.tryprompts.apps',
-                          subject: 'Try Prompt App',
-                        ),
-                      );
-                    },
-                  ),
-                  _buildSettingRow(
-                    context,
-                    icon: Icons.info_outline,
-                    iconColor: Colors.blueGrey,
-                    title: 'App Info',
+                    icon: Icons.code,
+                    title: 'Developer info',
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const AppInfoScreen(),
+                          builder: (context) => const DeveloperInfoScreen(),
                         ),
                       );
                     },
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // Version Indicator
-            Center(
-              child: Text(
-                'v1.0.0',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[500],
+                  _buildMenuRow(
+                    context,
+                    icon: Icons.privacy_tip_outlined,
+                    title: 'Privacy Policy',
+                    onTap: () async {
+                      final Uri url = Uri.parse('https://tryprompt.app/privacy');
+                      try {
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Could not open Privacy Policy link.'),
+                              ),
+                            );
+                          }
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error: $e'),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                  _buildMenuRow(
+                    context,
+                    icon: Icons.dark_mode_outlined,
+                    title: 'Dark Mode',
+                    trailing: Switch(
+                      value: isDark,
+                      activeTrackColor: primaryColor,
+                      onChanged: (bool value) {
+                        onThemeChanged(value ? ThemeMode.dark : ThemeMode.light);
+                      },
                     ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -299,36 +312,48 @@ class MenuTab extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingRow(
+  Widget _buildMenuRow(
     BuildContext context, {
     required IconData icon,
-    required Color iconColor,
     required String title,
+    Widget? trailing,
     VoidCallback? onTap,
   }) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: iconColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(10),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor = isDark ? Colors.white : Colors.black87;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: iconColor,
+                size: 24,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+              if (trailing != null) ...[
+                const SizedBox(width: 16),
+                trailing,
+              ],
+            ],
+          ),
         ),
-        child: Icon(
-          icon,
-          color: iconColor,
-          size: 20,
-        ),
       ),
-      title: Text(
-        title,
-        style: const TextStyle(fontWeight: FontWeight.w600),
-      ),
-      trailing: const Icon(
-        Icons.chevron_right,
-        color: Colors.grey,
-        size: 20,
-      ),
-      onTap: onTap,
     );
   }
 }
