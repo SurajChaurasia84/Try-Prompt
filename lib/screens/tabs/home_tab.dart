@@ -131,6 +131,7 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
       });
 
       if (mounted) {
+        FavoritesService.cachePrompts(all);
         setState(() {
           _allDocs = all;
           _isLoading = false;
@@ -260,7 +261,7 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
                 itemCount: cats.length,
                 itemBuilder: (context, index) {
                   final cat = cats[index];
-                  final isSelected = widget.activeFilter == cat;
+                  final isSelected = false; // Chips act as navigation triggers and remain unselected
                   return GestureDetector(
                     onTap: () {
                       final categoryDocs = cat == 'Trending'
