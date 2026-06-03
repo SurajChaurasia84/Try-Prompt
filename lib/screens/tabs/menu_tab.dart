@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'favorite_tab.dart';
 import '../app_info_screen.dart';
-import '../profile_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -22,11 +19,6 @@ class MenuTab extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
 
-    final user = FirebaseAuth.instance.currentUser;
-    final displayName = user?.displayName ?? 'Try Prompt User';
-    final email = user?.email ?? 'premium.user@tryprompts.com';
-    final photoUrl = user?.photoURL;
-
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Padding(
@@ -34,44 +26,64 @@ class MenuTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Profile Section (Centered, without background)
+            // App Branding Section (Centered, Premium Glassmorphism-style design)
             Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  CircleAvatar(
-                    radius: 48,
-                    backgroundColor: primaryColor.withValues(alpha: 0.1),
-                    backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
-                    child: photoUrl == null
-                        ? Text(
-                            displayName.isNotEmpty ? displayName.substring(0, 1).toUpperCase() : 'T',
-                            style: TextStyle(
-                              color: primaryColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 32,
-                            ),
-                          )
-                        : null,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isDark
+                        ? [const Color(0xFF1F1F1F), const Color(0xFF151515)]
+                        : [Colors.white, const Color(0xFFF9F9F9)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    displayName,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                    width: 1,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    email,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
-                        ),
-                  ),
-                ],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.rocket_launch,
+                        color: primaryColor,
+                        size: 40,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Try Prompt AI',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Unlock your creative AI power completely free',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: isDark ? Colors.grey[400] : Colors.grey[600],
+                          ),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 36),
@@ -159,20 +171,6 @@ class MenuTab extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _buildSettingRow(
-                    context,
-                    icon: Icons.person_outline,
-                    iconColor: Colors.blue,
-                    title: 'Profile',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ProfileScreen(),
-                        ),
-                      );
-                    },
-                  ),
                   _buildSettingRow(
                     context,
                     icon: Icons.favorite_border,
@@ -278,60 +276,6 @@ class MenuTab extends StatelessWidget {
                         MaterialPageRoute(
                           builder: (context) => const AppInfoScreen(),
                         ),
-                      );
-                    },
-                  ),
-                  _buildSettingRow(
-                    context,
-                    icon: Icons.logout,
-                    iconColor: Colors.red,
-                    title: 'Logout',
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          final isDark = Theme.of(context).brightness == Brightness.dark;
-                          return AlertDialog(
-                            backgroundColor: isDark ? const Color(0xFF1F1F1F) : Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            title: const Text(
-                              'Logout',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            content: const Text(
-                              'Are you sure you want to log out from Try Prompt?',
-                              style: TextStyle(fontSize: 14),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: Text(
-                                  'Cancel',
-                                  style: TextStyle(
-                                    color: isDark ? Colors.grey[400] : Colors.grey[600],
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () async {
-                                  Navigator.pop(context); // Close the dialog
-                                  await GoogleSignIn().signOut();
-                                  await FirebaseAuth.instance.signOut();
-                                },
-                                child: const Text(
-                                  'Logout',
-                                  style: TextStyle(
-                                    color: Colors.red,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
                       );
                     },
                   ),
