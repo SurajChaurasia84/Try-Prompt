@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/favorites_service.dart';
+import '../services/history_service.dart';
 
 class PromptViewScreen extends StatefulWidget {
   final Map<String, dynamic> data;
@@ -377,6 +378,7 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
                                   onPressed: () async {
                                     final prompt = widget.data['prompt'] as String? ?? '';
                                     await Clipboard.setData(ClipboardData(text: prompt));
+                                    await HistoryService.saveToHistory(prompt);
                                     if (context.mounted) {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
