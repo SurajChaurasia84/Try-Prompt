@@ -62,7 +62,7 @@ class _MainScreenState extends State<MainScreen> {
     final List<Widget> screens = [
       const HomeTab(),
       const DailyTab(),
-      const FavoriteTab(),
+      FavoriteTab(isActive: _currentIndex == 2),
       MenuTab(
         themeMode: widget.themeMode,
         onThemeChanged: widget.onThemeChanged,
