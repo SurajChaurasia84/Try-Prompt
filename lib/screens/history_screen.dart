@@ -10,7 +10,7 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  List<String> _history = [];
+  List<CopiedPrompt> _history = [];
   bool _isLoading = true;
 
   @override
@@ -30,8 +30,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
-  Future<void> _copyPrompt(String prompt) async {
-    await Clipboard.setData(ClipboardData(text: prompt));
+  Future<void> _copyPrompt(CopiedPrompt entry) async {
+    await Clipboard.setData(ClipboardData(text: entry.prompt));
+    await HistoryService.saveToHistory(entry.prompt, imageUrl: entry.imageUrl);
+    await _loadHistory();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -46,9 +48,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
-  Future<void> _deleteItem(String prompt) async {
-    await HistoryService.deleteFromHistory(prompt);
-    await _loadHistory();
+  Future<void> _deleteItem(CopiedPrompt entry) async {
+    await HistoryService.deleteFromHistory(entry);
+    // Reload state locally without triggering full screen progress loading spinner
+    final list = await HistoryService.getHistory();
+    if (mounted) {
+      setState(() {
+        _history = list;
+      });
+    }
   }
 
   Future<void> _clearAll() async {
@@ -100,6 +108,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  String _formatDateTime(DateTime dt) {
+    final year = dt.year;
+    final month = dt.month.toString().padLeft(2, '0');
+    final day = dt.day.toString().padLeft(2, '0');
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return '$year-$month-$day, $hour:$minute';
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -109,7 +126,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       backgroundColor: isDark ? const Color(0xFF0F0F0F) : const Color(0xFFF9F9F9),
       appBar: AppBar(
         title: const Text(
-          'History',
+          'All History',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.transparent,
@@ -119,12 +136,34 @@ class _HistoryScreenState extends State<HistoryScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          if (_history.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.delete_sweep_outlined),
-              onPressed: _clearAll,
-              tooltip: 'Clear All',
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert, color: isDark ? Colors.white : Colors.black87),
+            color: isDark ? const Color(0xFF1F1F1F) : Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
+            onSelected: (value) {
+              if (value == 'clear') {
+                _clearAll();
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem<String>(
+                value: 'clear',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_sweep_outlined, color: Colors.redAccent, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Clear History',
+                      style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
@@ -167,54 +206,125 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     ),
                   )
                 : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     physics: const BouncingScrollPhysics(),
                     itemCount: _history.length,
                     itemBuilder: (context, index) {
-                      final prompt = _history[index];
-                      return Container(
-                        decoration: const BoxDecoration(
-                          color: Colors.transparent, // Without background
+                      final entry = _history[index];
+                      return Dismissible(
+                        key: ValueKey('${entry.prompt}_${entry.copiedAt.millisecondsSinceEpoch}'),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.only(right: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(Icons.delete, color: Colors.white),
                         ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                          leading: Container(
-                            padding: const EdgeInsets.all(8),
+                        onDismissed: (direction) {
+                          _deleteItem(entry);
+                        },
+                        child: GestureDetector(
+                          onTap: () => _copyPrompt(entry),
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: primaryColor.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.assignment_outlined,
-                              color: primaryColor,
-                              size: 20,
-                            ),
-                          ),
-                          title: Text(
-                            prompt,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: isDark ? Colors.grey[200] : Colors.grey[800],
-                            ),
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.copy_outlined, size: 18),
-                                onPressed: () => _copyPrompt(prompt),
-                                tooltip: 'Copy again',
+                              color: isDark ? const Color(0xFF1F1F1F) : Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                              border: Border.all(
+                                color: isDark ? Colors.grey[900]! : Colors.grey[200]!,
+                                width: 1,
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
-                                onPressed: () => _deleteItem(prompt),
-                                tooltip: 'Delete',
-                              ),
-                            ],
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                // Left rounded image
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    color: isDark ? const Color(0xFF2A2A2A) : Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: entry.imageUrl.isNotEmpty
+                                      ? ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.network(
+                                            entry.imageUrl,
+                                            fit: BoxFit.cover,
+                                            loadingBuilder: (ctx, child, progress) {
+                                              if (progress == null) return child;
+                                              return const Center(
+                                                child: SizedBox(
+                                                  width: 16,
+                                                  height: 16,
+                                                  child: CircularProgressIndicator(
+                                                    strokeWidth: 1.5,
+                                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                                      Color(0xFFFF0000),
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                            errorBuilder: (ctx, err, st) => Icon(
+                                              Icons.assignment_outlined,
+                                              color: primaryColor,
+                                              size: 24,
+                                            ),
+                                          ),
+                                        )
+                                      : Icon(
+                                          Icons.assignment_outlined,
+                                          color: primaryColor,
+                                          size: 24,
+                                        ),
+                                ),
+                                const SizedBox(width: 14),
+
+                                // Right text content
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        entry.prompt,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark ? Colors.grey[200] : Colors.grey[800],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        _formatDateTime(entry.copiedAt),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: isDark ? Colors.grey[500] : Colors.grey[500],
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          onTap: () => _copyPrompt(prompt),
                         ),
                       );
                     },
