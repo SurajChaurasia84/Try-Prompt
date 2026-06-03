@@ -277,9 +277,7 @@ class _FavCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = Theme.of(context).primaryColor;
     final docId = item['docId'] as String;
-    final title = (item['title'] as String?)?.trim() ?? '';
     final imageUrl = (item['imageUrl'] as String?)?.trim() ?? '';
 
     return GestureDetector(
@@ -309,13 +307,12 @@ class _FavCard extends StatelessWidget {
           ],
         ),
         clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
             // ── Image ──
             if (imageUrl.isNotEmpty)
               AspectRatio(
-                aspectRatio: 3 / 4,
+                aspectRatio: 1.0,
                 child: Image.network(
                   imageUrl,
                   fit: BoxFit.cover,
@@ -361,39 +358,25 @@ class _FavCard extends StatelessWidget {
                 ),
               ),
 
-            // ── Title + Remove heart ──
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      title.isNotEmpty ? title : 'Untitled',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isDark
-                            ? Colors.grey[200]
-                            : const Color(0xFF1A1A1A),
-                      ),
-                    ),
+            // ── Heart Overlay in Top Corner ──
+            Positioned(
+              top: 8,
+              right: 8,
+              child: GestureDetector(
+                onTap: () => onRemove(docId),
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    shape: BoxShape.circle,
                   ),
-                  GestureDetector(
-                    onTap: () => onRemove(docId),
-                    behavior: HitTestBehavior.opaque,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 6),
-                      child: Icon(
-                        Icons.favorite,
-                        size: 18,
-                        color: primaryColor,
-                      ),
-                    ),
+                  child: const Icon(
+                    Icons.favorite,
+                    size: 18,
+                    color: Colors.red,
                   ),
-                ],
+                ),
               ),
             ),
           ],
