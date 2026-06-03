@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -36,8 +37,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        await user.updateDisplayName(_nameController.text.trim());
+        final newName = _nameController.text.trim();
+        await user.updateDisplayName(newName);
         await user.reload();
+        
+        // Update user name in Firestore collection
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+          'displayName': newName,
+        }).catchError((e) {
+          debugPrint("Failed to update user in Firestore: $e");
+        });
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
