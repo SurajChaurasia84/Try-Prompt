@@ -46,24 +46,49 @@ class _FavoriteTabState extends State<FavoriteTab> {
       // 1. Get from local cache first for instant loading
       final ids = await FavoritesService.getFavorites();
       
-      // If we don't have any items yet and cache is not empty, show loading
-      if (_favoriteItems.isEmpty && ids.isNotEmpty) {
-        setState(() => _isLoading = true);
-      } else if (ids.isEmpty) {
-        setState(() {
-          _favoriteItems = [];
-          _isLoading = false;
-        });
-      }
+      // 2. Filter from the memory cache
+      final cachedFavs = FavoritesService.getCachedFavorites(ids);
       
-      if (ids.isNotEmpty) {
+      // If cache matches the length of local IDs (or if no favorites saved at all)
+      if (cachedFavs.length == ids.length || ids.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _favoriteItems = cachedFavs;
+            _isLoading = false;
+          });
+        }
+      } else {
+        // If we have some items in the cache but not all, show cached ones immediately
+        // so the user sees some UI, while we fetch the rest in the background.
+        if (mounted) {
+          setState(() {
+            if (cachedFavs.isNotEmpty) {
+              _favoriteItems = cachedFavs;
+              _isLoading = false;
+            } else if (_favoriteItems.isEmpty) {
+              _isLoading = true;
+            }
+          });
+        }
+        
+        // Fetch missing items from Firestore
         await _fetchItemsForIds(ids);
       }
 
-      // 2. Sync with Firestore in the background and reload if the IDs changed
+      // 3. Sync with Firestore in the background and reload if the IDs changed
       final syncedIds = await FavoritesService.getFavorites(fetchFromFirestore: true);
       if (syncedIds.length != ids.length || !syncedIds.containsAll(ids)) {
-        await _fetchItemsForIds(syncedIds);
+        final syncedFavs = FavoritesService.getCachedFavorites(syncedIds);
+        if (syncedFavs.length == syncedIds.length) {
+          if (mounted) {
+            setState(() {
+              _favoriteItems = syncedFavs;
+              _isLoading = false;
+            });
+          }
+        } else {
+          await _fetchItemsForIds(syncedIds);
+        }
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
@@ -98,6 +123,9 @@ class _FavoriteTabState extends State<FavoriteTab> {
           });
         }
       }
+
+      // Save to memory cache so next tab visit is instant
+      FavoritesService.cachePrompts(items);
 
       if (mounted) {
         setState(() {
