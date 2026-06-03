@@ -281,9 +281,9 @@ class _FavoriteTabState extends State<FavoriteTab> {
     final right = <Map<String, dynamic>>[];
     for (var i = 0; i < filteredItems.length; i++) {
       if (i.isEven) {
-        left.add(_favoriteItems[i]);
+        left.add(filteredItems[i]);
       } else {
-        right.add(_favoriteItems[i]);
+        right.add(filteredItems[i]);
       }
     }
 
