@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -59,7 +60,29 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         idToken: googleAuth.idToken,
       );
 
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      final User? user = userCredential.user;
+
+      if (user != null) {
+        final userDocRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+        final userDoc = await userDocRef.get();
+        if (!userDoc.exists) {
+          await userDocRef.set({
+            'uid': user.uid,
+            'email': user.email ?? '',
+            'displayName': user.displayName ?? '',
+            'photoUrl': user.photoURL ?? '',
+            'createdAt': FieldValue.serverTimestamp(),
+            'lastSeen': FieldValue.serverTimestamp(),
+          });
+        } else {
+          await userDocRef.update({
+            'displayName': user.displayName ?? '',
+            'photoUrl': user.photoURL ?? '',
+            'lastSeen': FieldValue.serverTimestamp(),
+          });
+        }
+      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
