@@ -397,7 +397,7 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
                                   onPressed: () async {
                                     final prompt = widget.data['prompt'] as String? ?? '';
                                     await Clipboard.setData(ClipboardData(text: prompt));
-                                    await HistoryService.saveToHistory(prompt);
+                                    await HistoryService.saveToHistory(prompt, imageUrl: imageUrl);
                                     if (context.mounted) {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
