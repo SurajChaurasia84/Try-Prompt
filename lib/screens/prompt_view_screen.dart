@@ -33,6 +33,11 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
   @override
   void initState() {
     super.initState();
+    final currentPrompt = {
+      'docId': widget.docId,
+      ...widget.data,
+    };
+    FavoritesService.cachePrompts([currentPrompt]);
     _checkFavorite();
     _loadFavorites();
     _fetchSuggestions();
@@ -115,6 +120,7 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
       });
 
       if (mounted) {
+        FavoritesService.cachePrompts(suggestions);
         setState(() {
           _suggestedPrompts = suggestions;
           _isLoadingSuggestions = false;
