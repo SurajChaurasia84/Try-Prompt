@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FavoritesService {
@@ -5,6 +6,8 @@ class FavoritesService {
 
   // Memory cache of loaded prompts
   static final List<Map<String, dynamic>> _promptsCache = [];
+
+  static final ValueNotifier<Set<String>> favoritesNotifier = ValueNotifier<Set<String>>({});
 
   /// Add/update prompts in the memory cache
   static void cachePrompts(List<Map<String, dynamic>> prompts) {
@@ -33,7 +36,11 @@ class FavoritesService {
   static Future<Set<String>> getFavorites({bool fetchFromFirestore = false}) async {
     final prefs = await SharedPreferences.getInstance();
     final list = prefs.getStringList(_key) ?? [];
-    return list.toSet();
+    final set = list.toSet();
+    if (favoritesNotifier.value.length != set.length || !favoritesNotifier.value.containsAll(set)) {
+      favoritesNotifier.value = set;
+    }
+    return set;
   }
 
   /// Toggles a favorite item.
@@ -52,6 +59,7 @@ class FavoritesService {
       set.remove(docId);
     }
     await prefs.setStringList(_key, set.toList());
+    favoritesNotifier.value = set;
   }
 
   /// Check if a prompt is in the favorites list.
