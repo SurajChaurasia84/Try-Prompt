@@ -5,8 +5,7 @@ import '../../services/favorites_service.dart';
 import '../category_prompts_screen.dart';
 
 class HomeTab extends StatefulWidget {
-  final String searchQuery;
-  const HomeTab({super.key, this.searchQuery = ''});
+  const HomeTab({super.key});
 
   @override
   State<HomeTab> createState() => _HomeTabState();
@@ -57,7 +56,6 @@ class _HomeTabState extends State<HomeTab> {
       onFilterChange: (f) => setState(() => _activeFilter = f),
       onToggleFavorite: _toggleFavorite,
       onRefreshFavorites: _loadFavorites,
-      searchQuery: widget.searchQuery,
     );
   }
 }
@@ -71,7 +69,6 @@ class _PromptGridLoader extends StatefulWidget {
   final ValueChanged<String> onFilterChange;
   final Future<void> Function(String) onToggleFavorite;
   final VoidCallback onRefreshFavorites;
-  final String searchQuery;
 
   const _PromptGridLoader({
     super.key,
@@ -81,7 +78,6 @@ class _PromptGridLoader extends StatefulWidget {
     required this.onFilterChange,
     required this.onToggleFavorite,
     required this.onRefreshFavorites,
-    required this.searchQuery,
   });
 
   @override
@@ -245,13 +241,7 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
     cats.sort();
     cats.insert(0, 'Trending');
 
-    // Filter (Home tab always displays all docs; chips are now navigators; search filters by title)
-    final filtered = widget.searchQuery.isEmpty
-        ? _allDocs
-        : _allDocs.where((doc) {
-            final title = doc['title']?.toString().toLowerCase() ?? '';
-            return title.contains(widget.searchQuery.toLowerCase());
-          }).toList();
+    final filtered = _allDocs;
 
     return RefreshIndicator(
       color: const Color(0xFFFF0000),
