@@ -21,19 +21,11 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
-  bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
 
-  void _startSearch() {
-    setState(() {
-      _isSearching = true;
-    });
-  }
-
   void _stopSearch() {
     setState(() {
-      _isSearching = false;
       _searchController.clear();
       _searchQuery = "";
     });
@@ -50,11 +42,11 @@ class _MainScreenState extends State<MainScreen> {
       case 0:
         return 'Try Prompt AI Image';
       case 1:
-        return 'Daily Updates';
+        return 'Search Prompts';
       case 2:
-        return 'Favorite Prompts';
+        return 'Saved Prompts';
       case 3:
-        return 'Menu';
+        return 'Library';
       default:
         return 'Try Prompt';
     }
@@ -65,7 +57,7 @@ class _MainScreenState extends State<MainScreen> {
       case 0:
         return 'Welcome App';
       case 1:
-        return 'Daily prompt template';
+        return 'Find prompt templates';
       case 2:
         return 'Your saved templates';
       case 3:
@@ -80,11 +72,10 @@ class _MainScreenState extends State<MainScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final List<Widget> screens = [
-      HomeTab(searchQuery: _searchQuery),
+      const HomeTab(),
       DailyTab(searchQuery: _searchQuery),
       FavoriteTab(
         isActive: _currentIndex == 2,
-        searchQuery: _searchQuery,
       ),
       MenuTab(
         themeMode: widget.themeMode,
@@ -103,16 +94,12 @@ class _MainScreenState extends State<MainScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlayStyle,
       child: PopScope(
-        canPop: _currentIndex == 0 && !_isSearching,
+        canPop: _currentIndex == 0,
         onPopInvokedWithResult: (didPop, result) {
           if (didPop) return;
           
-          if (_isSearching) {
-            _stopSearch();
-            return;
-          }
-          
           if (_currentIndex != 0) {
+            _stopSearch();
             setState(() {
               _currentIndex = 0;
             });
@@ -123,22 +110,21 @@ class _MainScreenState extends State<MainScreen> {
             ? null
             : AppBar(
                 systemOverlayStyle: overlayStyle,
-                leading: _isSearching
-                    ? IconButton(
-                        icon: const Icon(Icons.arrow_back),
-                        onPressed: _stopSearch,
-                      )
-                    : null,
-                title: _isSearching
+                leading: null,
+                title: _currentIndex == 1
                     ? TextField(
                         controller: _searchController,
-                        autofocus: true,
                         decoration: InputDecoration(
-                          hintText: 'Search prompts by title...',
+                          hintText: 'Search prompts...',
                           border: InputBorder.none,
                           hintStyle: TextStyle(
-                            color: isDark ? Colors.grey[500] : Colors.grey[600],
+                            color: isDark ? Colors.grey[800] : Colors.grey[300],
                             fontSize: 16,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: isDark ? Colors.grey[700] : Colors.grey[400],
+                            size: 20,
                           ),
                         ),
                         style: TextStyle(
@@ -174,22 +160,16 @@ class _MainScreenState extends State<MainScreen> {
                         ],
                       ),
                 actions: [
-                  if (_currentIndex != 3) ...[
-                    if (_isSearching)
-                      IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _searchQuery = "";
-                          });
-                        },
-                      )
-                    else
-                      IconButton(
-                        icon: const Icon(Icons.search),
-                        onPressed: _startSearch,
-                      ),
+                  if (_currentIndex == 1 && _searchQuery.isNotEmpty) ...[
+                    IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {
+                          _searchQuery = "";
+                        });
+                      },
+                    ),
                     const SizedBox(width: 8),
                   ],
                 ],
@@ -223,9 +203,9 @@ class _MainScreenState extends State<MainScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(0, Icons.home_outlined, Icons.home, 'Home'),
-              _buildNavItem(1, Icons.calendar_today_outlined, Icons.calendar_today, 'Daily'),
-              _buildNavItem(2, Icons.favorite_border, Icons.favorite, 'Favorite'),
-              _buildNavItem(3, Icons.grid_view_outlined, Icons.grid_view, 'Menu'),
+              _buildNavItem(1, Icons.search_outlined, Icons.search, 'Search'),
+              _buildNavItem(2, Icons.favorite_border, Icons.favorite, 'Save'),
+              _buildNavItem(3, Icons.grid_view_outlined, Icons.grid_view, 'Library'),
             ],
           ),
         ),
