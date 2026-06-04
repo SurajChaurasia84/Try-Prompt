@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/mainscreen.dart';
 import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  
+  final prefs = await SharedPreferences.getInstance();
+  final String? savedTheme = prefs.getString('theme_mode');
+  ThemeMode initialTheme = ThemeMode.system;
+  if (savedTheme == 'dark') {
+    initialTheme = ThemeMode.dark;
+  } else if (savedTheme == 'light') {
+    initialTheme = ThemeMode.light;
+  }
+  MyApp.themeNotifier.value = initialTheme;
+
   runApp(const MyApp());
 }
 
@@ -86,8 +98,16 @@ class _MyAppState extends State<MyApp> {
           
           home: SplashScreen(
             themeMode: currentMode,
-            onThemeChanged: (mode) {
+            onThemeChanged: (mode) async {
               MyApp.themeNotifier.value = mode;
+              final prefs = await SharedPreferences.getInstance();
+              if (mode == ThemeMode.dark) {
+                await prefs.setString('theme_mode', 'dark');
+              } else if (mode == ThemeMode.light) {
+                await prefs.setString('theme_mode', 'light');
+              } else {
+                await prefs.setString('theme_mode', 'system');
+              }
             },
           ),
         );
