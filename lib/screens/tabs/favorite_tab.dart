@@ -24,6 +24,17 @@ class _FavoriteTabState extends State<FavoriteTab> {
   @override
   void initState() {
     super.initState();
+    FavoritesService.favoritesNotifier.addListener(_onFavoritesChanged);
+    _loadFavorites();
+  }
+
+  @override
+  void dispose() {
+    FavoritesService.favoritesNotifier.removeListener(_onFavoritesChanged);
+    super.dispose();
+  }
+
+  void _onFavoritesChanged() {
     _loadFavorites();
   }
 
@@ -140,7 +151,6 @@ class _FavoriteTabState extends State<FavoriteTab> {
 
   Future<void> _removeFavorite(String docId) async {
     await FavoritesService.toggleFavorite(docId);
-    await _loadFavorites();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
