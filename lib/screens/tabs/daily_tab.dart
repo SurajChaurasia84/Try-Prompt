@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/favorites_service.dart';
+import '../prompt_view_screen.dart';
 import 'home_tab.dart';
 
 class DailyTab extends StatefulWidget {
@@ -12,7 +13,7 @@ class DailyTab extends StatefulWidget {
 }
 
 class _DailyTabState extends State<DailyTab> {
-  List<Map<String, dynamic>> _dailyDocs = [];
+  List<Map<String, dynamic>> _allDocs = [];
   Set<String> _favorites = {};
   bool _isLoading = true;
   String? _error;
@@ -20,7 +21,7 @@ class _DailyTabState extends State<DailyTab> {
   @override
   void initState() {
     super.initState();
-    _loadDailyPrompts();
+    _loadAllPrompts();
     _loadFavorites();
   }
 
@@ -43,7 +44,7 @@ class _DailyTabState extends State<DailyTab> {
     }
   }
 
-  Future<void> _loadDailyPrompts() async {
+  Future<void> _loadAllPrompts() async {
     if (mounted) {
       setState(() {
         _isLoading = true;
@@ -55,14 +56,10 @@ class _DailyTabState extends State<DailyTab> {
       // 1. Try to load from cached prompts first
       final allCached = FavoritesService.getCachedPrompts();
       if (allCached.isNotEmpty) {
-        final daily = allCached.where((doc) {
-          final type = doc['type']?.toString().toLowerCase() ?? '';
-          return type == 'daily';
-        }).toList();
-        
+        final shuffled = List<Map<String, dynamic>>.from(allCached)..shuffle();
         if (mounted) {
           setState(() {
-            _dailyDocs = daily;
+            _allDocs = shuffled;
             _isLoading = false;
           });
         }
@@ -87,14 +84,11 @@ class _DailyTabState extends State<DailyTab> {
       // Save to memory cache
       FavoritesService.cachePrompts(all);
 
-      final daily = all.where((doc) {
-        final type = doc['type']?.toString().toLowerCase() ?? '';
-        return type == 'daily';
-      }).toList();
+      final shuffled = List<Map<String, dynamic>>.from(all)..shuffle();
 
       if (mounted) {
         setState(() {
-          _dailyDocs = daily;
+          _allDocs = shuffled;
           _isLoading = false;
         });
       }
@@ -132,7 +126,7 @@ class _DailyTabState extends State<DailyTab> {
                   color: isDark ? Colors.grey[700] : Colors.grey[400]),
               const SizedBox(height: 16),
               Text(
-                'Failed to load daily prompts',
+                'Failed to load prompts',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -148,7 +142,7 @@ class _DailyTabState extends State<DailyTab> {
               ),
               const SizedBox(height: 20),
               TextButton.icon(
-                onPressed: _loadDailyPrompts,
+                onPressed: _loadAllPrompts,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
               )
@@ -158,53 +152,84 @@ class _DailyTabState extends State<DailyTab> {
       );
     }
 
-    final filteredDocs = widget.searchQuery.isEmpty
-        ? _dailyDocs
-        : _dailyDocs.where((doc) {
-            final title = doc['title']?.toString().toLowerCase() ?? '';
-            return title.contains(widget.searchQuery.toLowerCase());
-          }).toList();
+    // ── Random explore grid (when query is empty) ──
+    if (widget.searchQuery.trim().isEmpty) {
+      if (_allDocs.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.explore_outlined,
+                size: 64,
+                color: isDark ? Colors.grey[750] : Colors.grey[400],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No Prompts Found',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        );
+      }
 
-    if (filteredDocs.isEmpty) {
       return RefreshIndicator(
         color: const Color(0xFFFF0000),
-        onRefresh: _loadDailyPrompts,
+        onRefresh: _loadAllPrompts,
+        child: PinterestGrid(
+          docs: _allDocs,
+          favorites: _favorites,
+          onToggleFavorite: _toggleFavorite,
+          onRefreshFavorites: _loadFavorites,
+        ),
+      );
+    }
+
+    // ── Search results state (when query is entered) ──
+    final filteredDocs = _allDocs.where((doc) {
+      final title = doc['title']?.toString().toLowerCase() ?? '';
+      return title.contains(widget.searchQuery.trim().toLowerCase());
+    }).toList();
+
+    if (filteredDocs.isEmpty) {
+      return Center(
         child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Container(
-            height: MediaQuery.of(context).size.height - 200,
-            alignment: Alignment.center,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  widget.searchQuery.isEmpty ? Icons.calendar_today_outlined : Icons.search_off_outlined,
-                  size: 64,
-                  color: isDark ? Colors.grey[700] : Colors.grey[400],
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.search_off_outlined,
+                size: 80,
+                color: isDark ? Colors.grey[800] : Colors.grey[300],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No Results Found',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  widget.searchQuery.isEmpty ? 'No Daily Templates Found' : 'No Results Found',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.grey[400] : Colors.grey[600],
-                      ),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                  child: Text(
-                    widget.searchQuery.isEmpty
-                        ? 'Daily prompt templates will appear here as they are released.'
-                        : 'No prompts match your search query "${widget.searchQuery}".',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: isDark ? Colors.grey[600] : Colors.grey[400],
-                        ),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                child: Text(
+                  'No prompts match your search query "${widget.searchQuery}".',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark ? Colors.grey[600] : Colors.grey[400],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       );
@@ -212,7 +237,7 @@ class _DailyTabState extends State<DailyTab> {
 
     return RefreshIndicator(
       color: const Color(0xFFFF0000),
-      onRefresh: _loadDailyPrompts,
+      onRefresh: _loadAllPrompts,
       child: PinterestGrid(
         docs: filteredDocs,
         favorites: _favorites,
