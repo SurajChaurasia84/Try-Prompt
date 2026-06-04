@@ -4,6 +4,7 @@ import '../developer_info_screen.dart';
 import '../history_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../services/favorites_service.dart';
 
 class MenuTab extends StatelessWidget {
   final ThemeMode themeMode;
@@ -99,7 +100,18 @@ class MenuTab extends StatelessWidget {
                     icon: Icons.person_outline,
                     title: 'Follow Me',
                     onTap: () async {
-                      final Uri url = Uri.parse('https://instagram.com/tryprompt');
+                      final String link = FavoritesService.followMeLink.trim();
+                      if (link.isEmpty) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Link not available'),
+                            ),
+                          );
+                        }
+                        return;
+                      }
+                      final Uri url = Uri.parse(link);
                       try {
                         if (await canLaunchUrl(url)) {
                           await launchUrl(url, mode: LaunchMode.externalApplication);
@@ -128,7 +140,18 @@ class MenuTab extends StatelessWidget {
                     icon: Icons.play_circle_outline,
                     title: 'How to use?',
                     onTap: () async {
-                      final Uri url = Uri.parse('https://youtube.com');
+                      final String link = FavoritesService.howToUseLink.trim();
+                      if (link.isEmpty) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Link not available'),
+                            ),
+                          );
+                        }
+                        return;
+                      }
+                      final Uri url = Uri.parse(link);
                       try {
                         if (await canLaunchUrl(url)) {
                           await launchUrl(url, mode: LaunchMode.externalApplication);
