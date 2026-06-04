@@ -109,4 +109,31 @@ class FavoritesService {
     }
     return [];
   }
+
+  static String followMeLink = '';
+  static String howToUseLink = '';
+
+  /// Load follow me and how to use links from Firestore or local cache
+  static Future<void> loadAppLinks() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      // Load local cache first (no hardcoded fallback)
+      followMeLink = prefs.getString('link_follow_me') ?? '';
+      howToUseLink = prefs.getString('link_how_to_use') ?? '';
+
+      // Fetch from Firestore
+      final doc = await FirebaseFirestore.instance.collection('settings').doc('links').get();
+      if (doc.exists) {
+        final data = doc.data();
+        if (data != null) {
+          followMeLink = data['follow_me'] ?? '';
+          howToUseLink = data['how_to_use'] ?? '';
+          await prefs.setString('link_follow_me', followMeLink);
+          await prefs.setString('link_how_to_use', howToUseLink);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading app links: $e');
+    }
+  }
 }
