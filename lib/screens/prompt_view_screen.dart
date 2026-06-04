@@ -467,11 +467,29 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () async {
-                          const urlString = 'https://www.instagram.com';
+                          final String urlString = FavoritesService.followMeLink.trim();
+                          if (urlString.isEmpty) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Link not available'),
+                                ),
+                              );
+                            }
+                            return;
+                          }
                           try {
                             final Uri uri = Uri.parse(urlString);
                             if (await canLaunchUrl(uri)) {
                               await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            } else {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Could not open follow link.'),
+                                  ),
+                                );
+                              }
                             }
                           } catch (e) {
                             debugPrint("Error launching follow link: $e");
@@ -496,12 +514,30 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () async {
-                          final link = (widget.data['link'] as String?)?.trim() ?? '';
-                          final urlString = link.isNotEmpty ? link : 'https://www.youtube.com';
+                          final String link = (widget.data['link'] as String?)?.trim() ?? '';
+                          final String urlString = link.isNotEmpty ? link : FavoritesService.howToUseLink.trim();
+                          if (urlString.isEmpty) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Link not available'),
+                                ),
+                              );
+                            }
+                            return;
+                          }
                           try {
                             final Uri uri = Uri.parse(urlString);
                             if (await canLaunchUrl(uri)) {
                               await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            } else {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Could not open tutorial link.'),
+                                  ),
+                                );
+                              }
                             }
                           } catch (e) {
                             debugPrint("Error launching how to use link: $e");
