@@ -38,6 +38,7 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
       ...widget.data,
     };
     FavoritesService.cachePrompts([currentPrompt]);
+    FavoritesService.favoritesNotifier.addListener(_onFavoritesChanged);
     _checkFavorite();
     _loadFavorites();
     _fetchSuggestions();
@@ -48,8 +49,19 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
 
   @override
   void dispose() {
+    FavoritesService.favoritesNotifier.removeListener(_onFavoritesChanged);
     _typewriterController.dispose();
     super.dispose();
+  }
+
+  void _onFavoritesChanged() {
+    if (mounted) {
+      final notifierValue = FavoritesService.favoritesNotifier.value;
+      setState(() {
+        _isFavorite = notifierValue.contains(widget.docId);
+        _favorites = notifierValue;
+      });
+    }
   }
 
   Future<void> _checkFavorite() async {
@@ -70,10 +82,6 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
 
   Future<void> _toggleSuggestionFavorite(String docId) async {
     await FavoritesService.toggleFavorite(docId);
-    final favs = await FavoritesService.getFavorites();
-    if (mounted) {
-      setState(() => _favorites = favs);
-    }
   }
 
   Future<void> _fetchSuggestions() async {
