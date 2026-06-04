@@ -21,7 +21,22 @@ class _HomeTabState extends State<HomeTab> {
   @override
   void initState() {
     super.initState();
+    FavoritesService.favoritesNotifier.addListener(_onFavoritesChanged);
     _loadFavorites();
+  }
+
+  @override
+  void dispose() {
+    FavoritesService.favoritesNotifier.removeListener(_onFavoritesChanged);
+    super.dispose();
+  }
+
+  void _onFavoritesChanged() {
+    if (mounted) {
+      setState(() {
+        _favorites = FavoritesService.favoritesNotifier.value;
+      });
+    }
   }
 
   Future<void> _loadFavorites() async {
@@ -40,8 +55,6 @@ class _HomeTabState extends State<HomeTab> {
 
   Future<void> _toggleFavorite(String docId) async {
     await FavoritesService.toggleFavorite(docId);
-    final favs = await FavoritesService.getFavorites();
-    if (mounted) setState(() => _favorites = favs);
   }
 
   @override
@@ -241,7 +254,11 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
     cats.sort();
     cats.insert(0, 'Trending');
 
-    final filtered = _allDocs;
+    final filtered = _allDocs.where((doc) {
+      final type = doc['type']?.toString().toLowerCase() ?? '';
+      final category = doc['category']?.toString().toLowerCase() ?? '';
+      return type != 'trending' && category != 'trending';
+    }).toList();
 
     return RefreshIndicator(
       color: const Color(0xFFFF0000),
@@ -354,27 +371,7 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.whatshot,
-                                  color: Colors.redAccent,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Trending Prompts',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : Colors.black87,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          const SizedBox(height: 12),
                           SizedBox(
                             height: 180,
                             child: ListView.builder(
@@ -395,17 +392,6 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              'All Prompts',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : Colors.black87,
-                              ),
-                            ),
-                          ),
                         ],
                       );
                     }(),
