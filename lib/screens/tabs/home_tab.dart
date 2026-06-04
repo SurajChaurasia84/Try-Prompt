@@ -342,6 +342,73 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
                     favorites: widget.favorites,
                     onToggleFavorite: widget.onToggleFavorite,
                     onRefreshFavorites: widget.onRefreshFavorites,
+                    header: () {
+                      final trendingDocs = _allDocs.where((doc) {
+                        final type = doc['type']?.toString().toLowerCase() ?? '';
+                        final category = doc['category']?.toString().toLowerCase() ?? '';
+                        return type == 'trending' || category == 'trending';
+                      }).toList();
+
+                      if (trendingDocs.isEmpty) return null;
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.whatshot,
+                                  color: Colors.redAccent,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Trending Prompts',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? Colors.white : Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 180,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: trendingDocs.length,
+                              itemBuilder: (context, index) {
+                                final doc = trendingDocs[index];
+                                final isFav = widget.favorites.contains(doc['docId']);
+                                return TrendingCard(
+                                  doc: doc,
+                                  isFavorite: isFav,
+                                  onToggleFavorite: widget.onToggleFavorite,
+                                  onRefreshFavorites: widget.onRefreshFavorites,
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'All Prompts',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }(),
                   ),
           ),
         ],
@@ -357,12 +424,15 @@ class PinterestGrid extends StatelessWidget {
   final Set<String> favorites;
   final Future<void> Function(String docId) onToggleFavorite;
   final VoidCallback onRefreshFavorites;
+  final Widget? header;
 
   const PinterestGrid({
+    super.key,
     required this.docs,
     required this.favorites,
     required this.onToggleFavorite,
     required this.onRefreshFavorites,
+    this.header,
   });
 
   @override
@@ -380,6 +450,10 @@ class PinterestGrid extends StatelessWidget {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
+        if (header != null)
+          SliverToBoxAdapter(
+            child: header!,
+          ),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(12, 4, 12, 100),
           sliver: SliverToBoxAdapter(
@@ -553,6 +627,158 @@ class PromptCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Trending Card ─────────────────────────────────────────────────────────────
+
+class TrendingCard extends StatelessWidget {
+  final Map<String, dynamic> doc;
+  final bool isFavorite;
+  final Future<void> Function(String) onToggleFavorite;
+  final VoidCallback onRefreshFavorites;
+
+  const TrendingCard({
+    super.key,
+    required this.doc,
+    required this.isFavorite,
+    required this.onToggleFavorite,
+    required this.onRefreshFavorites,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final docId = doc['docId'] as String;
+    final imageUrl = (doc['imageUrl'] as String?)?.trim() ?? '';
+    final title = (doc['title'] as String?)?.trim() ?? 'Untitled';
+
+    final data = Map<String, dynamic>.from(doc)
+      ..remove('docId')
+      ..remove('category');
+
+    return GestureDetector(
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PromptViewScreen(data: data, docId: docId),
+          ),
+        );
+        onRefreshFavorites();
+      },
+      child: Container(
+        width: 140,
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            children: [
+              // Image
+              Positioned.fill(
+                child: imageUrl.isNotEmpty
+                    ? Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (ctx, child, progress) {
+                          if (progress == null) return child;
+                          return Container(
+                            color: isDark ? const Color(0xFF1F1F1F) : Colors.grey[200],
+                            child: const Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF0000)),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        errorBuilder: (ctx, err, st) => Container(
+                          color: isDark ? const Color(0xFF1F1F1F) : Colors.grey[200],
+                          child: Icon(
+                            Icons.image_outlined,
+                            color: isDark ? Colors.grey[700] : Colors.grey[400],
+                            size: 28,
+                          ),
+                        ),
+                      )
+                    : Container(
+                        color: isDark ? const Color(0xFF1F1F1F) : Colors.grey[200],
+                        child: Icon(
+                          Icons.image_outlined,
+                          color: isDark ? Colors.grey[700] : Colors.grey[400],
+                          size: 28,
+                        ),
+                      ),
+              ),
+              // Gradient Overlay
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.1),
+                        Colors.black.withValues(alpha: 0.8),
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+              // Content (Title & Favorite Heart button)
+              Positioned(
+                bottom: 8,
+                left: 8,
+                right: 8,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: () async {
+                        await onToggleFavorite(docId);
+                      },
+                      child: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: isFavorite ? Colors.red : Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
