@@ -180,7 +180,6 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    final primaryColor = Theme.of(context).primaryColor;
 
     if (_isLoading) {
       return const Center(
@@ -294,7 +293,6 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
                 itemCount: cats.length,
                 itemBuilder: (context, index) {
                   final cat = cats[index];
-                  final isSelected = false; // Chips act as navigation triggers and remain unselected
                   return GestureDetector(
                     onTap: () {
                       final categoryDocs = _allDocs.where((d) {
@@ -323,33 +321,25 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? primaryColor
-                            : (isDark
-                                ? const Color(0xFF2A2A2A)
-                                : Colors.grey[200]),
+                        color: isDark
+                            ? const Color(0xFF2A2A2A)
+                            : Colors.grey[200],
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: isSelected
-                              ? primaryColor
-                              : (isDark
-                                  ? Colors.grey[700]!
-                                  : Colors.grey[300]!),
+                          color: isDark
+                              ? Colors.grey[700]!
+                              : Colors.grey[300]!,
                           width: 1,
                         ),
                       ),
                       child: Text(
                         cat,
                         style: TextStyle(
-                          color: isSelected
-                              ? Colors.white
-                              : (isDark
-                                  ? Colors.grey[300]
-                                  : Colors.grey[700]),
+                          color: isDark
+                              ? Colors.grey[300]
+                              : Colors.grey[700],
                           fontSize: 12,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.w500,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
@@ -586,6 +576,7 @@ class PromptCard extends StatelessWidget {
   final VoidCallback onRefreshFavorites;
 
   const PromptCard({
+    super.key,
     required this.doc,
     required this.isFavorite,
     required this.onToggleFavorite,
