@@ -105,17 +105,33 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
   @override
   void initState() {
     super.initState();
-    _fetchAll();
+    _loadFromCacheAndFetch();
   }
 
-  /// Step 1: get all category doc IDs from the root 'prompts' collection
-  /// Step 2: for each category, fetch its 'prompts' subcollection
-  /// This avoids needing a collectionGroup index.
-  Future<void> _fetchAll() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+  Future<void> _loadFromCacheAndFetch() async {
+    // 1. Load from persistent cache first for instant startup
+    final cached = await FavoritesService.loadPromptsFromLocalCache();
+    if (cached.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _allDocs = cached;
+          _isLoading = false;
+        });
+      }
+      FavoritesService.cachePrompts(cached);
+    }
+
+    // 2. Fetch from network in the background
+    await _fetchAll(showSpinner: cached.isEmpty);
+  }
+
+  Future<void> _fetchAll({bool showSpinner = true}) async {
+    if (showSpinner) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
 
     try {
       final snapshot = await FirebaseFirestore.instance
@@ -145,13 +161,14 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
 
       if (mounted) {
         FavoritesService.cachePrompts(all);
+        await FavoritesService.savePromptsToLocalCache(all); // Save to local cache
         setState(() {
           _allDocs = all;
           _isLoading = false;
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && _allDocs.isEmpty) {
         setState(() {
           _error = e.toString();
           _isLoading = false;
@@ -405,7 +422,7 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
 
 // ─── Pinterest two-column grid ────────────────────────────────────────────────
 
-class PinterestGrid extends StatelessWidget {
+class PinterestGrid extends StatefulWidget {
   final List<Map<String, dynamic>> docs;
   final Set<String> favorites;
   final Future<void> Function(String docId) onToggleFavorite;
@@ -422,26 +439,80 @@ class PinterestGrid extends StatelessWidget {
   });
 
   @override
+  State<PinterestGrid> createState() => _PinterestGridState();
+}
+
+class _PinterestGridState extends State<PinterestGrid> {
+  late ScrollController _scrollController;
+  int _displayLimit = 12;
+  bool _isAddingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController()..addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant PinterestGrid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reset limit when target documents list changes (e.g. changing active category)
+    if (oldWidget.docs != widget.docs) {
+      setState(() {
+        _displayLimit = 12;
+      });
+    }
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      if (_displayLimit < widget.docs.length && !_isAddingMore) {
+        setState(() {
+          _isAddingMore = true;
+        });
+
+        // Small delay for smooth scroll visual loading feedback
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted) {
+            setState(() {
+              _displayLimit = (_displayLimit + 10).clamp(0, widget.docs.length);
+              _isAddingMore = false;
+            });
+          }
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final displayedDocs = widget.docs.take(_displayLimit).toList();
     final left = <Map<String, dynamic>>[];
     final right = <Map<String, dynamic>>[];
-    for (var i = 0; i < docs.length; i++) {
+    for (var i = 0; i < displayedDocs.length; i++) {
       if (i.isEven) {
-        left.add(docs[i]);
+        left.add(displayedDocs[i]);
       } else {
-        right.add(docs[i]);
+        right.add(displayedDocs[i]);
       }
     }
 
     return CustomScrollView(
+      controller: _scrollController,
       physics: const BouncingScrollPhysics(),
       slivers: [
-        if (header != null)
+        if (widget.header != null)
           SliverToBoxAdapter(
-            child: header!,
+            child: widget.header!,
           ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(12, 4, 12, 100),
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 20),
           sliver: SliverToBoxAdapter(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -451,9 +522,9 @@ class PinterestGrid extends StatelessWidget {
                     children: left
                         .map((doc) => PromptCard(
                               doc: doc,
-                              isFavorite: favorites.contains(doc['docId']),
-                              onToggleFavorite: onToggleFavorite,
-                              onRefreshFavorites: onRefreshFavorites,
+                              isFavorite: widget.favorites.contains(doc['docId']),
+                              onToggleFavorite: widget.onToggleFavorite,
+                              onRefreshFavorites: widget.onRefreshFavorites,
                             ))
                         .toList(),
                   ),
@@ -464,9 +535,9 @@ class PinterestGrid extends StatelessWidget {
                     children: right
                         .map((doc) => PromptCard(
                               doc: doc,
-                              isFavorite: favorites.contains(doc['docId']),
-                              onToggleFavorite: onToggleFavorite,
-                              onRefreshFavorites: onRefreshFavorites,
+                              isFavorite: widget.favorites.contains(doc['docId']),
+                              onToggleFavorite: widget.onToggleFavorite,
+                              onRefreshFavorites: widget.onRefreshFavorites,
                             ))
                         .toList(),
                   ),
@@ -475,6 +546,32 @@ class PinterestGrid extends StatelessWidget {
             ),
           ),
         ),
+        if (_displayLimit < widget.docs.length)
+          const SliverPadding(
+            padding: EdgeInsets.fromLTRB(0, 0, 0, 100),
+            sliver: SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 24.0),
+                child: Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.0,
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF0000)),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          )
+        else
+          const SliverPadding(
+            padding: EdgeInsets.fromLTRB(0, 0, 0, 100),
+            sliver: SliverToBoxAdapter(
+              child: SizedBox(height: 20),
+            ),
+          ),
       ],
     );
   }
