@@ -35,33 +35,39 @@
       background-color: var(--bg-color);
       color: var(--text-color);
       line-height: 1.6;
-      padding: 30px 20px;
+      padding: 40px 20px;
     }
 
     .container {
-      max-width: 600px;
+      max-width: 650px;
       margin: 0 auto;
     }
 
     h1 {
-      font-size: 24px;
+      font-size: 26px;
       font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .meta-info {
+      font-size: 13px;
+      color: var(--text-secondary);
       margin-bottom: 24px;
       padding-bottom: 12px;
       border-bottom: 1px solid var(--border-color);
     }
 
     h2 {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 600;
-      margin-top: 24px;
-      margin-bottom: 8px;
+      margin-top: 28px;
+      margin-bottom: 10px;
     }
 
     p {
       font-size: 14px;
       color: var(--text-secondary);
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
     ul {
@@ -72,25 +78,59 @@
     }
 
     li {
-      margin-bottom: 6px;
+      margin-bottom: 8px;
+    }
+
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+      font-size: 13px;
+      color: var(--text-secondary);
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Try Prompt Privacy Policy</h1>
+    <div class="meta-info">Last Updated: June 4, 2026</div>
     
-    <h2>1. No Registration or Account Needed</h2>
-    <p>The Try Prompt app is completely free to use. No accounts, login, or registration are required. We do not collect or request any personal identifiers (like names, emails, or phone numbers).</p>
+    <p>This Privacy Policy outlines how the <strong>Try Prompt</strong> mobile application client collects, uses, and manages information. We are committed to transparency and the security of your data.</p>
 
-    <h2>2. Local Storage</h2>
-    <p>Your saved favorites and copy history log are stored locally on your device's storage. This data is never uploaded, synced, or shared with our servers or any third parties. Uninstalling the app will permanently delete all local data.</p>
+    <h2>1. User Authentication & Accounts</h2>
+    <p>The Try Prompt app is designed to be completely anonymous and free. We have removed all account creation, registration, and profile synchronization logic (including Google Sign-In). You can use all core features of the app without providing any personal identifiers, email addresses, or usernames.</p>
+
+    <h2>2. Local Storage (On-Device Data)</h2>
+    <p>The application saves preferences and app-related statistics locally on your device's memory using <code>SharedPreferences</code>. This data stays entirely on your device and is never sent to our servers:</p>
+    <ul>
+      <li><strong>Favorite Prompts:</strong> Prompt templates you mark as favorite (using the heart icon) are saved locally by their ID to render the Save list instantly.</li>
+      <li><strong>Copy History:</strong> When you copy a prompt template to your clipboard, the app logs the prompt text, image reference, and the exact timestamp. This copy log is capped at <strong>50 entries</strong> to maintain device storage, and older entries are automatically deleted.</li>
+    </ul>
 
     <h2>3. Cloud Database Connection</h2>
-    <p>The app connects to Firebase Firestore solely to fetch categories and prompt templates. This connection is read-only. No user-specific data, logs, or selections are written to Firestore.</p>
+    <p>The application retrieves category listings and prompt templates from a Firestore database connection. This retrieval is strictly read-only. The client app never writes, logs, or syncs your personal preferences, copy history, or search queries back to Firebase.</p>
 
-    <h2>4. External Services</h2>
-    <p>When sharing prompts, the app invokes your device's native share feature. External web links or developer email connections are opened in your default browser or mail client outside the app.</p>
+    <h2>4. External Links & Sharing</h2>
+    <ul>
+      <li><strong>Native Sharing:</strong> When you share prompt templates with others, the app invokes the operating system's native share service. The app does not track or receive information about who you share with or the target application.</li>
+      <li><strong>External URLs:</strong> Tapping links to support websites or connection options loads those sites in your external web browser or mail client outside the app.</li>
+    </ul>
+
+    <h2>5. User Data Control & Deletion</h2>
+    <p>You have absolute control over the data generated on your device:
+    <ul>
+      <li>You can remove individual copy history entries by swiping them away in the History tab.</li>
+      <li>You can clear your entire copy history instantly by selecting the "Clear All History" option in the History tab menu.</li>
+      <li>Tapping the heart icon on any prompt will immediately remove it from your local favorites list.</li>
+      <li>Uninstalling the app will completely wipe all local preferences, copy history, and cached databases from your device.</li>
+    </ul>
+
+    <h2>6. Support Contact</h2>
+    <p>If you have any questions or concerns regarding this policy, please reach out to our team at <strong>support@tryprompt.com</strong>.</p>
+
+    <div class="footer">
+      <p>Copyright &copy; 2026 Try Prompt. All rights reserved.</p>
+    </div>
   </div>
 </body>
 </html>
