@@ -213,79 +213,11 @@
       font-weight: 500;
     }
 
-    /* Main Container (Two Columns layout on desktop) */
+    /* Main Container (Single Column layout) */
     .main-wrapper {
-      max-width: 1200px;
+      max-width: 900px;
       margin: 0 auto;
       padding: 0 24px 80px 24px;
-      display: grid;
-      grid-template-columns: 280px 1fr;
-      gap: 48px;
-    }
-
-    /* Sidebar Navigation */
-    .sidebar-nav {
-      position: sticky;
-      top: 110px;
-      height: fit-content;
-    }
-
-    .nav-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .nav-title {
-      font-family: 'Outfit', sans-serif;
-      font-size: 1rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 16px;
-      color: var(--text-color);
-      border-bottom: 2px solid var(--border-color);
-      padding-bottom: 8px;
-    }
-
-    .nav-list {
-      list-style: none;
-    }
-
-    .nav-item {
-      margin-bottom: 8px;
-    }
-
-    .nav-link {
-      display: block;
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 0.9375rem;
-      font-weight: 500;
-      padding: 8px 12px;
-      border-radius: 8px;
-      transition: all 0.2s ease;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .nav-link:hover {
-      color: var(--primary-color);
-      background-color: var(--primary-light);
-      transform: translateX(4px);
-    }
-
-    .nav-link.active {
-      color: var(--text-color);
-      background-color: var(--primary-color);
-      font-weight: 600;
-    }
-
-    .nav-link.active:hover {
-      color: white;
     }
 
     /* Content Area */
@@ -471,34 +403,6 @@
     }
 
     /* Responsive Design */
-    @media (max-width: 992px) {
-      .main-wrapper {
-        grid-template-columns: 1fr;
-        gap: 32px;
-      }
-
-      .sidebar-nav {
-        position: relative;
-        top: 0;
-      }
-
-      .nav-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      .nav-item {
-        margin-bottom: 0;
-      }
-
-      .nav-link {
-        padding: 6px 12px;
-        background-color: rgba(255, 255, 255, 0.02);
-        border: 1px solid var(--border-color);
-      }
-    }
-
     @media (max-width: 768px) {
       .hero-section {
         padding-top: 120px;
@@ -510,8 +414,10 @@
       }
 
       .policy-content {
-        padding: 24px;
-        border-radius: 16px;
+        padding: 24px 0;
+        background-color: transparent;
+        border: none;
+        box-shadow: none;
       }
 
       .data-cards-grid {
@@ -571,22 +477,6 @@
 
   <!-- Main Wrapper -->
   <main class="main-wrapper">
-    <!-- Sidebar Navigation -->
-    <aside class="sidebar-nav">
-      <div class="nav-card">
-        <div class="nav-title">Sections</div>
-        <ul class="nav-list">
-          <li class="nav-item"><a href="#intro" class="nav-link active">Introduction</a></li>
-          <li class="nav-item"><a href="#data-collection" class="nav-link">Information Collected</a></li>
-          <li class="nav-item"><a href="#data-use" class="nav-link">How We Use It</a></li>
-          <li class="nav-item"><a href="#third-party" class="nav-link">Third-Party Services</a></li>
-          <li class="nav-item"><a href="#retention-deletion" class="nav-link">Data Control & Rights</a></li>
-          <li class="nav-item"><a href="#children" class="nav-link">Children's Privacy</a></li>
-          <li class="nav-item"><a href="#contact" class="nav-link">Contact Support</a></li>
-        </ul>
-      </div>
-    </aside>
-
     <!-- Policy Content -->
     <article class="policy-content">
       
@@ -775,28 +665,7 @@
       }
     }
 
-    // Scrollspy for sidebar navigation
-    const sections = document.querySelectorAll('.policy-section');
-    const navLinks = document.querySelectorAll('.nav-link');
-
-    window.addEventListener('scroll', () => {
-      let currentId = '';
-      
-      sections.forEach(section => {
-        const sectionTop = section.offsetTop;
-        const sectionHeight = section.clientHeight;
-        if (pageYOffset >= (sectionTop - 120)) {
-          currentId = section.getAttribute('id');
-        }
-      });
-
-      navLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href').slice(1) === currentId) {
-          link.classList.add('active');
-        }
-      });
-    });
+    // Scrollspy removed (no sidebar navigation)
   </script>
 </body>
 </html>

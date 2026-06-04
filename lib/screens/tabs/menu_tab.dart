@@ -268,7 +268,7 @@ class MenuTab extends StatelessWidget {
                     icon: Icons.privacy_tip_outlined,
                     title: 'Privacy Policy',
                     onTap: () async {
-                      final Uri url = Uri.parse('https://tryprompt.app/privacy');
+                      final Uri url = Uri.parse('https://surajchaurasia84.github.io/Try-Prompt/');
                       try {
                         if (await canLaunchUrl(url)) {
                           await launchUrl(url, mode: LaunchMode.externalApplication);
