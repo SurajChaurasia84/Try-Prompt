@@ -263,9 +263,12 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
                   final isSelected = false; // Chips act as navigation triggers and remain unselected
                   return GestureDetector(
                     onTap: () {
-                      final categoryDocs = cat == 'Trending'
-                          ? _allDocs
-                          : _allDocs.where((d) => d['type'] == cat).toList();
+                      final categoryDocs = _allDocs.where((d) {
+                        final type = d['type']?.toString().toLowerCase() ?? '';
+                        final category = d['category']?.toString().toLowerCase() ?? '';
+                        final target = cat.toLowerCase();
+                        return type == target || category == target;
+                      }).toList();
                       Navigator.push(
                         context,
                         MaterialPageRoute(
