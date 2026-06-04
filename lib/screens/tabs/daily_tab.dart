@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/favorites_service.dart';
-import '../prompt_view_screen.dart';
 import 'home_tab.dart';
 
 class DailyTab extends StatefulWidget {
