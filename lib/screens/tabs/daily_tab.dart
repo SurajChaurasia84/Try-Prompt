@@ -21,8 +21,23 @@ class _DailyTabState extends State<DailyTab> {
   @override
   void initState() {
     super.initState();
+    FavoritesService.favoritesNotifier.addListener(_onFavoritesChanged);
     _loadAllPrompts();
     _loadFavorites();
+  }
+
+  @override
+  void dispose() {
+    FavoritesService.favoritesNotifier.removeListener(_onFavoritesChanged);
+    super.dispose();
+  }
+
+  void _onFavoritesChanged() {
+    if (mounted) {
+      setState(() {
+        _favorites = FavoritesService.favoritesNotifier.value;
+      });
+    }
   }
 
   Future<void> _loadFavorites() async {
@@ -36,12 +51,6 @@ class _DailyTabState extends State<DailyTab> {
 
   Future<void> _toggleFavorite(String docId) async {
     await FavoritesService.toggleFavorite(docId);
-    final favs = await FavoritesService.getFavorites();
-    if (mounted) {
-      setState(() {
-        _favorites = favs;
-      });
-    }
   }
 
   Future<void> _loadAllPrompts() async {
@@ -181,7 +190,7 @@ class _DailyTabState extends State<DailyTab> {
       return RefreshIndicator(
         color: const Color(0xFFFF0000),
         onRefresh: _loadAllPrompts,
-        child: PinterestThreeColumnGrid(
+        child: PinterestGrid(
           docs: _allDocs,
           favorites: _favorites,
           onToggleFavorite: _toggleFavorite,
@@ -238,7 +247,7 @@ class _DailyTabState extends State<DailyTab> {
     return RefreshIndicator(
       color: const Color(0xFFFF0000),
       onRefresh: _loadAllPrompts,
-      child: PinterestThreeColumnGrid(
+      child: PinterestGrid(
         docs: filteredDocs,
         favorites: _favorites,
         onToggleFavorite: _toggleFavorite,
@@ -248,89 +257,4 @@ class _DailyTabState extends State<DailyTab> {
   }
 }
 
-// ─── Pinterest three-column grid ────────────────────────────────────────────────
 
-class PinterestThreeColumnGrid extends StatelessWidget {
-  final List<Map<String, dynamic>> docs;
-  final Set<String> favorites;
-  final Future<void> Function(String docId) onToggleFavorite;
-  final VoidCallback onRefreshFavorites;
-
-  const PinterestThreeColumnGrid({
-    super.key,
-    required this.docs,
-    required this.favorites,
-    required this.onToggleFavorite,
-    required this.onRefreshFavorites,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final col1 = <Map<String, dynamic>>[];
-    final col2 = <Map<String, dynamic>>[];
-    final col3 = <Map<String, dynamic>>[];
-    for (var i = 0; i < docs.length; i++) {
-      if (i % 3 == 0) {
-        col1.add(docs[i]);
-      } else if (i % 3 == 1) {
-        col2.add(docs[i]);
-      } else {
-        col3.add(docs[i]);
-      }
-    }
-
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(8, 4, 8, 100),
-          sliver: SliverToBoxAdapter(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    children: col1
-                        .map((doc) => PromptCard(
-                              doc: doc,
-                              isFavorite: favorites.contains(doc['docId']),
-                              onToggleFavorite: onToggleFavorite,
-                              onRefreshFavorites: onRefreshFavorites,
-                            ))
-                        .toList(),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Column(
-                    children: col2
-                        .map((doc) => PromptCard(
-                              doc: doc,
-                              isFavorite: favorites.contains(doc['docId']),
-                              onToggleFavorite: onToggleFavorite,
-                              onRefreshFavorites: onRefreshFavorites,
-                            ))
-                        .toList(),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Column(
-                    children: col3
-                        .map((doc) => PromptCard(
-                              doc: doc,
-                              isFavorite: favorites.contains(doc['docId']),
-                              onToggleFavorite: onToggleFavorite,
-                              onRefreshFavorites: onRefreshFavorites,
-                            ))
-                        .toList(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
