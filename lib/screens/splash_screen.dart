@@ -104,7 +104,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       gradient: LinearGradient(
                         colors: [
                           primaryColor,
-                          primaryColor.withOpacity(0.5),
+                          primaryColor.withValues(alpha: 0.5),
                           Colors.orangeAccent,
                         ],
                         begin: Alignment.topLeft,
@@ -112,7 +112,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: primaryColor.withOpacity(isDark ? 0.35 : 0.15),
+                          color: primaryColor.withValues(alpha: isDark ? 0.35 : 0.15),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -195,7 +195,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                             gradient: LinearGradient(
                               colors: [
                                 primaryColor,
-                                primaryColor.withOpacity(0.7),
+                                primaryColor.withValues(alpha: 0.7),
                                 Colors.orangeAccent,
                               ],
                               begin: Alignment.centerLeft,
