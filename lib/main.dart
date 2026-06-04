@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'screens/mainscreen.dart';
 import 'screens/splash_screen.dart';
 
 void main() async {
@@ -36,8 +35,6 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    final bool isUnderTest = WidgetsBinding.instance.runtimeType.toString().contains('Test');
-
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: MyApp.themeNotifier,
       builder: (context, currentMode, _) {
