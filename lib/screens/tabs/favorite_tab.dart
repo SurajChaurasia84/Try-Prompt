@@ -6,13 +6,11 @@ import '../prompt_view_screen.dart';
 class FavoriteTab extends StatefulWidget {
   final bool isScreen;
   final bool isActive;
-  final String searchQuery;
 
   const FavoriteTab({
     super.key,
     this.isScreen = false,
     this.isActive = false,
-    this.searchQuery = '',
   });
 
   @override
@@ -235,55 +233,14 @@ class _FavoriteTabState extends State<FavoriteTab> {
       );
     }
 
-    final filteredItems = widget.searchQuery.isEmpty
-        ? _favoriteItems
-        : _favoriteItems.where((item) {
-            final title = item['title']?.toString().toLowerCase() ?? '';
-            return title.contains(widget.searchQuery.toLowerCase());
-          }).toList();
-
-    if (filteredItems.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.search_off_outlined,
-              size: 64,
-              color: isDark ? Colors.grey[700] : Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No Results Found',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0),
-              child: Text(
-                'No favorites match your search query "${widget.searchQuery}".',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: isDark ? Colors.grey[600] : Colors.grey[400],
-                    ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
     // Pinterest-style 2-column grid
     final left = <Map<String, dynamic>>[];
     final right = <Map<String, dynamic>>[];
-    for (var i = 0; i < filteredItems.length; i++) {
+    for (var i = 0; i < _favoriteItems.length; i++) {
       if (i.isEven) {
-        left.add(filteredItems[i]);
+        left.add(_favoriteItems[i]);
       } else {
-        right.add(filteredItems[i]);
+        right.add(_favoriteItems[i]);
       }
     }
 
