@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'favorite_tab.dart';
 import '../developer_info_screen.dart';
 import '../history_screen.dart';
 import 'package:share_plus/share_plus.dart';
