@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FavoritesService {
   static const _key = 'favorite_prompt_ids';
@@ -66,5 +68,45 @@ class FavoritesService {
   static Future<bool> isFavorite(String docId) async {
     final favorites = await getFavorites();
     return favorites.contains(docId);
+  }
+
+  /// Save prompts to persistent local cache
+  static Future<void> savePromptsToLocalCache(List<Map<String, dynamic>> prompts) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final List<Map<String, dynamic>> serializable = prompts.map((p) {
+        final Map<String, dynamic> copy = Map<String, dynamic>.from(p);
+        if (copy['createdAt'] is Timestamp) {
+          copy['createdAt'] = (copy['createdAt'] as Timestamp).millisecondsSinceEpoch;
+        } else if (copy['createdAt'] is DateTime) {
+          copy['createdAt'] = (copy['createdAt'] as DateTime).millisecondsSinceEpoch;
+        }
+        return copy;
+      }).toList();
+      await prefs.setString('cached_prompts_list', jsonEncode(serializable));
+    } catch (e) {
+      debugPrint('Error saving prompts cache: $e');
+    }
+  }
+
+  /// Load prompts from persistent local cache
+  static Future<List<Map<String, dynamic>>> loadPromptsFromLocalCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? jsonStr = prefs.getString('cached_prompts_list');
+      if (jsonStr != null && jsonStr.isNotEmpty) {
+        final List<dynamic> decoded = jsonDecode(jsonStr);
+        return decoded.map((p) {
+          final Map<String, dynamic> map = Map<String, dynamic>.from(p as Map);
+          if (map['createdAt'] is int) {
+            map['createdAt'] = Timestamp.fromMillisecondsSinceEpoch(map['createdAt'] as int);
+          }
+          return map;
+        }).toList();
+      }
+    } catch (e) {
+      debugPrint('Error loading prompts cache: $e');
+    }
+    return [];
   }
 }
