@@ -4,6 +4,7 @@ import 'tabs/home_tab.dart';
 import 'tabs/daily_tab.dart';
 import 'tabs/favorite_tab.dart';
 import 'tabs/menu_tab.dart';
+import '../services/favorites_service.dart';
 
 class MainScreen extends StatefulWidget {
   final ThemeMode themeMode;
@@ -23,6 +24,12 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
+
+  @override
+  void initState() {
+    super.initState();
+    FavoritesService.loadAppLinks();
+  }
 
   void _stopSearch() {
     setState(() {
