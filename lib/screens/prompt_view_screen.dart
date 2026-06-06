@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/favorites_service.dart';
 import '../services/history_service.dart';
+import 'package:external_app_launcher/external_app_launcher.dart';
 
 class PromptViewScreen extends StatefulWidget {
   final Map<String, dynamic> data;
@@ -171,6 +172,49 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
           behavior: SnackBarBehavior.floating,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
+
+  Future<void> _launchApp({
+    required String androidPackage,
+    required String iosUrlScheme,
+    required String appName,
+  }) async {
+    bool isInstalled = false;
+    try {
+      isInstalled = await LaunchApp.isAppInstalled(
+        androidPackageName: androidPackage,
+        iosUrlScheme: iosUrlScheme,
+      );
+    } catch (e) {
+      debugPrint("Error checking app installation: $e");
+    }
+
+    bool success = false;
+    if (isInstalled) {
+      try {
+        await LaunchApp.openApp(
+          androidPackageName: androidPackage,
+          iosUrlScheme: iosUrlScheme,
+          openStore: false,
+        );
+        success = true;
+      } catch (e) {
+        debugPrint("Error opening app: $e");
+      }
+    }
+
+    if (!success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Unable to open $appName"),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     }
@@ -546,6 +590,55 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
                         icon: const Icon(Icons.help_outline_rounded, size: 18),
                         label: const Text(
                           'How To Use',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: primaryColor,
+                          side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Try ChatGPT & Try Gemini Row
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _launchApp(
+                          androidPackage: 'com.openai.chatgpt',
+                          iosUrlScheme: 'chatgpt://',
+                          appName: 'ChatGPT',
+                        ),
+                        label: const Text(
+                          'Try ChatGPT',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: primaryColor,
+                          side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _launchApp(
+                          androidPackage: 'com.google.android.apps.bard',
+                          iosUrlScheme: 'googlegemini://',
+                          appName: 'Gemini',
+                        ),
+                        label: const Text(
+                          'Try Gemini',
                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
