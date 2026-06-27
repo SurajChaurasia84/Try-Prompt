@@ -51,5 +51,7 @@
 		<string>com.openai.chat</string>
 		<string>googlegemini</string>
 	</array>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3799020977133888~3549949496</string>
 </dict>
 </plist>
