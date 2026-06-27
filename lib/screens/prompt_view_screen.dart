@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/favorites_service.dart';
 import '../services/history_service.dart';
 import 'package:external_app_launcher/external_app_launcher.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class PromptViewScreen extends StatefulWidget {
   final Map<String, dynamic> data;
@@ -24,6 +25,8 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
   bool _isFavorite = false;
   bool _isGenerating = false;
   bool _showPrompt = false;
+  bool _isLoadingAd = false;
+  RewardedAd? _rewardedAd;
   late AnimationController _typewriterController;
   String _currentTypedText = "";
 
@@ -52,6 +55,7 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
   void dispose() {
     FavoritesService.favoritesNotifier.removeListener(_onFavoritesChanged);
     _typewriterController.dispose();
+    _rewardedAd?.dispose();
     super.dispose();
   }
 
@@ -269,6 +273,78 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
     }
   }
 
+  Future<void> _handleCopyPromptWithAd(String imageUrl) async {
+    if (_isLoadingAd) return;
+
+    setState(() {
+      _isLoadingAd = true;
+    });
+
+    final prompt = widget.data['prompt'] as String? ?? '';
+
+    void executeCopyAction() async {
+      await Clipboard.setData(ClipboardData(text: prompt));
+      await HistoryService.saveToHistory(prompt, imageUrl: imageUrl);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Prompt copied to clipboard!'),
+            duration: const Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    }
+
+    RewardedAd.load(
+      adUnitId: 'ca-app-pub-3799020977133888/2793447193',
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (RewardedAd ad) {
+          _rewardedAd = ad;
+          if (!mounted) {
+            ad.dispose();
+            return;
+          }
+          setState(() {
+            _isLoadingAd = false;
+          });
+
+          _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (RewardedAd ad) {
+              ad.dispose();
+              _rewardedAd = null;
+              executeCopyAction();
+            },
+            onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+              ad.dispose();
+              _rewardedAd = null;
+              executeCopyAction();
+            },
+          );
+
+          _rewardedAd!.show(
+            onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+              // User completed/rewarded
+            },
+          );
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          debugPrint('RewardedAd failed to load: $error');
+          if (mounted) {
+            setState(() {
+              _isLoadingAd = false;
+            });
+            executeCopyAction();
+          }
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -312,7 +388,9 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
           const SizedBox(width: 8),
         ],
       ),
-      body: SafeArea(
+      body: Stack(
+        children: [
+          SafeArea(
         top: false,
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -446,23 +524,7 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
                                 const SizedBox(height: 16),
                                 // Copy Prompt Button
                                 ElevatedButton.icon(
-                                  onPressed: () async {
-                                    final prompt = widget.data['prompt'] as String? ?? '';
-                                    await Clipboard.setData(ClipboardData(text: prompt));
-                                    await HistoryService.saveToHistory(prompt, imageUrl: imageUrl);
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: const Text('Prompt copied to clipboard!'),
-                                          duration: const Duration(seconds: 1),
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  },
+                                  onPressed: () => _handleCopyPromptWithAd(imageUrl),
                                   icon: const Icon(Icons.copy_rounded, size: 20),
                                   label: const Text(
                                     'Copy Prompt',
@@ -722,6 +784,47 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
             ),
           ),
         ),
+      ),
+      if (_isLoadingAd)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black54,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1C1C1C) : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.25),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Loading Ad...',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
