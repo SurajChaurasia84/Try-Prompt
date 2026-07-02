@@ -26,7 +26,9 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
   bool _isGenerating = false;
   bool _showPrompt = false;
   bool _isLoadingAd = false;
-  RewardedAd? _rewardedAd;
+  InterstitialAd? _interstitialAd;
+  BannerAd? _bannerAd;
+  bool _isBannerAdLoaded = false;
   late AnimationController _typewriterController;
   String _currentTypedText = "";
 
@@ -49,13 +51,32 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
     _typewriterController = AnimationController(
       vsync: this,
     );
+    _bannerAd = BannerAd(
+      adUnitId: 'ca-app-pub-3799020977133888/4155464475',
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          if (mounted) {
+            setState(() {
+              _isBannerAdLoaded = true;
+            });
+          }
+        },
+        onAdFailedToLoad: (ad, err) {
+          debugPrint('PromptViewScreen BannerAd failed to load: $err');
+          ad.dispose();
+        },
+      ),
+    )..load();
   }
 
   @override
   void dispose() {
     FavoritesService.favoritesNotifier.removeListener(_onFavoritesChanged);
     _typewriterController.dispose();
-    _rewardedAd?.dispose();
+    _interstitialAd?.dispose();
+    _bannerAd?.dispose();
     super.dispose();
   }
 
@@ -299,12 +320,12 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
       }
     }
 
-    RewardedAd.load(
-      adUnitId: 'ca-app-pub-3799020977133888/2793447193',
+    InterstitialAd.load(
+      adUnitId: 'ca-app-pub-3799020977133888/4039978042',
       request: const AdRequest(),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (RewardedAd ad) {
-          _rewardedAd = ad;
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (InterstitialAd ad) {
+          _interstitialAd = ad;
           if (!mounted) {
             ad.dispose();
             return;
@@ -313,27 +334,23 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
             _isLoadingAd = false;
           });
 
-          _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
-            onAdDismissedFullScreenContent: (RewardedAd ad) {
+          _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (InterstitialAd ad) {
               ad.dispose();
-              _rewardedAd = null;
+              _interstitialAd = null;
               executeCopyAction();
             },
-            onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+            onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
               ad.dispose();
-              _rewardedAd = null;
+              _interstitialAd = null;
               executeCopyAction();
             },
           );
 
-          _rewardedAd!.show(
-            onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-              // User completed/rewarded
-            },
-          );
+          _interstitialAd!.show();
         },
         onAdFailedToLoad: (LoadAdError error) {
-          debugPrint('RewardedAd failed to load: $error');
+          debugPrint('InterstitialAd failed to load: $error');
           if (mounted) {
             setState(() {
               _isLoadingAd = false;
@@ -826,6 +843,15 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
             ),
         ],
       ),
+      bottomNavigationBar: _isBannerAdLoaded && _bannerAd != null
+          ? Container(
+              alignment: Alignment.center,
+              width: _bannerAd!.size.width.toDouble(),
+              height: _bannerAd!.size.height.toDouble(),
+              color: isDark ? const Color(0xFF0F0F0F) : Colors.white,
+              child: AdWidget(ad: _bannerAd!),
+            )
+          : null,
     );
   }
 }
