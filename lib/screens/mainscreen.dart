@@ -5,6 +5,7 @@ import 'tabs/daily_tab.dart';
 import 'tabs/favorite_tab.dart';
 import 'tabs/menu_tab.dart';
 import '../services/favorites_service.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class MainScreen extends StatefulWidget {
   final ThemeMode themeMode;
@@ -24,11 +25,35 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
+  BannerAd? _bannerAd;
+  bool _isBannerAdLoaded = false;
 
   @override
   void initState() {
     super.initState();
     FavoritesService.loadAppLinks();
+    _loadBannerAd();
+  }
+
+  void _loadBannerAd() {
+    _bannerAd = BannerAd(
+      adUnitId: 'ca-app-pub-3799020977133888/4155464475',
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          if (mounted) {
+            setState(() {
+              _isBannerAdLoaded = true;
+            });
+          }
+        },
+        onAdFailedToLoad: (ad, err) {
+          debugPrint('BannerAd failed to load: $err');
+          ad.dispose();
+        },
+      ),
+    )..load();
   }
 
   void _stopSearch() {
@@ -41,6 +66,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _bannerAd?.dispose();
     super.dispose();
   }
 
@@ -190,31 +216,44 @@ class _MainScreenState extends State<MainScreen> {
             children: screens,
           ),
         ),
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0F0F0F) : Colors.white,
-            border: Border(
-              top: BorderSide(
-                color: isDark ? Colors.grey[900]! : Colors.grey[200]!,
-                width: 1,
+        bottomNavigationBar: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_isBannerAdLoaded && _bannerAd != null)
+              Container(
+                alignment: Alignment.center,
+                width: _bannerAd!.size.width.toDouble(),
+                height: _bannerAd!.size.height.toDouble(),
+                color: isDark ? const Color(0xFF0F0F0F) : Colors.white,
+                child: AdWidget(ad: _bannerAd!),
+              ),
+            Container(
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F0F0F) : Colors.white,
+                border: Border(
+                  top: BorderSide(
+                    color: isDark ? Colors.grey[900]! : Colors.grey[200]!,
+                    width: 1,
+                  ),
+                ),
+              ),
+              padding: EdgeInsets.only(
+                top: 10,
+                bottom: MediaQuery.of(context).padding.bottom + 10,
+                left: 16,
+                right: 16,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(0, Icons.home_outlined, Icons.home, 'Home'),
+                  _buildNavItem(1, Icons.search_outlined, Icons.search, 'Search'),
+                  _buildNavItem(2, Icons.favorite_border, Icons.favorite, 'Save'),
+                  _buildNavItem(3, Icons.grid_view_outlined, Icons.grid_view, 'Library'),
+                ],
               ),
             ),
-          ),
-          padding: EdgeInsets.only(
-            top: 10,
-            bottom: MediaQuery.of(context).padding.bottom + 10,
-            left: 16,
-            right: 16,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(0, Icons.home_outlined, Icons.home, 'Home'),
-              _buildNavItem(1, Icons.search_outlined, Icons.search, 'Search'),
-              _buildNavItem(2, Icons.favorite_border, Icons.favorite, 'Save'),
-              _buildNavItem(3, Icons.grid_view_outlined, Icons.grid_view, 'Library'),
-            ],
-          ),
+          ],
         ),
       ),
     ),
