@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'tabs/home_tab.dart';
 import '../../services/favorites_service.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class CategoryPromptsScreen extends StatefulWidget {
   final String categoryName;
@@ -24,11 +25,37 @@ class CategoryPromptsScreen extends StatefulWidget {
 
 class _CategoryPromptsScreenState extends State<CategoryPromptsScreen> {
   Set<String> _localFavorites = {};
+  BannerAd? _bannerAd;
+  bool _isBannerAdLoaded = false;
 
   @override
   void initState() {
     super.initState();
     _localFavorites = Set.from(widget.favorites);
+    _bannerAd = BannerAd(
+      adUnitId: 'ca-app-pub-3799020977133888/4155464475',
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          if (mounted) {
+            setState(() {
+              _isBannerAdLoaded = true;
+            });
+          }
+        },
+        onAdFailedToLoad: (ad, err) {
+          debugPrint('CategoryPromptsScreen BannerAd failed to load: $err');
+          ad.dispose();
+        },
+      ),
+    )..load();
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
   }
 
   Future<void> _toggleFavorite(String docId) async {
@@ -77,6 +104,15 @@ class _CategoryPromptsScreenState extends State<CategoryPromptsScreen> {
                 onRefreshFavorites: widget.onRefreshFavorites,
               ),
       ),
+      bottomNavigationBar: _isBannerAdLoaded && _bannerAd != null
+          ? Container(
+              alignment: Alignment.center,
+              width: _bannerAd!.size.width.toDouble(),
+              height: _bannerAd!.size.height.toDouble(),
+              color: isDark ? const Color(0xFF0F0F0F) : Colors.white,
+              child: AdWidget(ad: _bannerAd!),
+            )
+          : null,
     );
   }
 }
