@@ -362,6 +362,87 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
     );
   }
 
+  Future<void> _launchAppWithAd({
+    required String androidPackage,
+    required String iosUrlScheme,
+    required String appName,
+    required String imageUrl,
+  }) async {
+    final prompt = widget.data['prompt'] as String? ?? '';
+    // Prefill prompt by copying to clipboard
+    await Clipboard.setData(ClipboardData(text: prompt));
+    await HistoryService.saveToHistory(prompt, imageUrl: imageUrl);
+
+    if (_showPrompt) {
+      // Direct open if generated
+      await _launchApp(
+        androidPackage: androidPackage,
+        iosUrlScheme: iosUrlScheme,
+        appName: appName,
+      );
+      return;
+    }
+
+    if (_isLoadingAd) return;
+
+    setState(() {
+      _isLoadingAd = true;
+    });
+
+    InterstitialAd.load(
+      adUnitId: 'ca-app-pub-3799020977133888/4039978042',
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (InterstitialAd ad) {
+          _interstitialAd = ad;
+          if (!mounted) {
+            ad.dispose();
+            return;
+          }
+          setState(() {
+            _isLoadingAd = false;
+          });
+
+          _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (InterstitialAd ad) async {
+              ad.dispose();
+              _interstitialAd = null;
+              await _launchApp(
+                androidPackage: androidPackage,
+                iosUrlScheme: iosUrlScheme,
+                appName: appName,
+              );
+            },
+            onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) async {
+              ad.dispose();
+              _interstitialAd = null;
+              await _launchApp(
+                androidPackage: androidPackage,
+                iosUrlScheme: iosUrlScheme,
+                appName: appName,
+              );
+            },
+          );
+
+          _interstitialAd!.show();
+        },
+        onAdFailedToLoad: (LoadAdError error) async {
+          debugPrint('InterstitialAd failed to load: $error');
+          if (mounted) {
+            setState(() {
+              _isLoadingAd = false;
+            });
+            await _launchApp(
+              androidPackage: androidPackage,
+              iosUrlScheme: iosUrlScheme,
+              appName: appName,
+            );
+          }
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -432,33 +513,33 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
                     },
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(24),
-                      child: AspectRatio(
-                        aspectRatio: 1.0,
-                        child: Image.network(
-                          imageUrl,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (ctx, child, progress) {
-                            if (progress == null) return child;
-                            return Container(
-                              color: isDark
-                                  ? const Color(0xFF2A2A2A)
-                                  : Colors.grey[200],
-                              child: const Center(
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Color(0xFFFF0000)),
-                                ),
-                              ),
-                            );
-                          },
-                          errorBuilder: (ctx, err, st) => Container(
+                      child: Image.network(
+                        imageUrl,
+                        width: double.infinity,
+                        fit: BoxFit.fitWidth,
+                        loadingBuilder: (ctx, child, progress) {
+                          if (progress == null) return child;
+                          return Container(
                             color: isDark
                                 ? const Color(0xFF2A2A2A)
                                 : Colors.grey[200],
+                            padding: const EdgeInsets.symmetric(vertical: 40),
                             child: const Center(
-                              child: Icon(Icons.broken_image_outlined,
-                                  size: 48, color: Colors.grey),
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Color(0xFFFF0000)),
+                              ),
                             ),
+                          );
+                        },
+                        errorBuilder: (ctx, err, st) => Container(
+                          color: isDark
+                              ? const Color(0xFF2A2A2A)
+                              : Colors.grey[200],
+                          padding: const EdgeInsets.symmetric(vertical: 40),
+                          child: const Center(
+                            child: Icon(Icons.broken_image_outlined,
+                                size: 48, color: Colors.grey),
                           ),
                         ),
                       ),
@@ -689,10 +770,11 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () => _launchApp(
+                        onPressed: () => _launchAppWithAd(
                           androidPackage: 'com.openai.chatgpt',
                           iosUrlScheme: 'chatgpt://',
                           appName: 'ChatGPT',
+                          imageUrl: imageUrl,
                         ),
                         label: const Text(
                           'Try ChatGPT',
@@ -711,10 +793,11 @@ class _PromptViewScreenState extends State<PromptViewScreen> with SingleTickerPr
                     const SizedBox(width: 12),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () => _launchApp(
+                        onPressed: () => _launchAppWithAd(
                           androidPackage: 'com.google.android.apps.bard',
                           iosUrlScheme: 'googlegemini://',
                           appName: 'Gemini',
+                          imageUrl: imageUrl,
                         ),
                         label: const Text(
                           'Try Gemini',
