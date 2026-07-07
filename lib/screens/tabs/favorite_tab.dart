@@ -349,39 +349,38 @@ class _FavCard extends StatelessWidget {
           children: [
             // ── Image ──
             if (imageUrl.isNotEmpty)
-              AspectRatio(
-                aspectRatio: 1.0,
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (ctx, child, progress) {
-                    if (progress == null) return child;
-                    return Container(
-                      color: isDark
-                          ? const Color(0xFF2A2A2A)
-                          : Colors.grey[100],
-                      child: const Center(
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1.5,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                                Color(0xFFFF0000)),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                  errorBuilder: (ctx, err, st) => Container(
+              Image.network(
+                imageUrl,
+                width: double.infinity,
+                fit: BoxFit.fitWidth,
+                loadingBuilder: (ctx, child, progress) {
+                  if (progress == null) return child;
+                  return Container(
                     color: isDark
                         ? const Color(0xFF2A2A2A)
-                        : Colors.grey[200],
-                    height: 120,
+                        : Colors.grey[100],
+                    padding: const EdgeInsets.symmetric(vertical: 30),
                     child: const Center(
-                      child: Icon(Icons.broken_image_outlined,
-                          color: Colors.grey, size: 28),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1.5,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFFFF0000)),
+                        ),
+                      ),
                     ),
+                  );
+                },
+                errorBuilder: (ctx, err, st) => Container(
+                  color: isDark
+                      ? const Color(0xFF2A2A2A)
+                      : Colors.grey[200],
+                  padding: const EdgeInsets.symmetric(vertical: 30),
+                  child: const Center(
+                    child: Icon(Icons.broken_image_outlined,
+                        color: Colors.grey, size: 28),
                   ),
                 ),
               )
