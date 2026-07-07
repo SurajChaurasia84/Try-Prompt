@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../prompt_view_screen.dart';
 import '../../services/favorites_service.dart';
 import '../category_prompts_screen.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -101,11 +102,83 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
   List<Map<String, dynamic>> _allDocs = [];
   bool _isLoading = true;
   String? _error;
+  bool _isLoadingAd = false;
+  InterstitialAd? _interstitialAd;
 
   @override
   void initState() {
     super.initState();
     _loadFromCacheAndFetch();
+  }
+
+  @override
+  void dispose() {
+    _interstitialAd?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleCategoryClickWithAd(String cat, List<Map<String, dynamic>> categoryDocs) async {
+    if (_isLoadingAd) return;
+
+    setState(() {
+      _isLoadingAd = true;
+    });
+
+    void navigateToCategory() {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CategoryPromptsScreen(
+            categoryName: cat,
+            docs: categoryDocs,
+            favorites: widget.favorites,
+            onToggleFavorite: widget.onToggleFavorite,
+            onRefreshFavorites: widget.onRefreshFavorites,
+          ),
+        ),
+      );
+    }
+
+    InterstitialAd.load(
+      adUnitId: 'ca-app-pub-3799020977133888/4039978042',
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (InterstitialAd ad) {
+          _interstitialAd = ad;
+          if (!mounted) {
+            ad.dispose();
+            return;
+          }
+          setState(() {
+            _isLoadingAd = false;
+          });
+
+          _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (InterstitialAd ad) {
+              ad.dispose();
+              _interstitialAd = null;
+              navigateToCategory();
+            },
+            onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+              ad.dispose();
+              _interstitialAd = null;
+              navigateToCategory();
+            },
+          );
+
+          _interstitialAd!.show();
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          debugPrint('InterstitialAd failed to load: $error');
+          if (mounted) {
+            setState(() {
+              _isLoadingAd = false;
+            });
+            navigateToCategory();
+          }
+        },
+      ),
+    );
   }
 
   Future<void> _loadFromCacheAndFetch() async {
@@ -149,15 +222,8 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
         });
       }
 
-      // Sort newest first
-      all.sort((a, b) {
-        final aTime = a['createdAt'] as Timestamp?;
-        final bTime = b['createdAt'] as Timestamp?;
-        if (aTime == null && bTime == null) return 0;
-        if (aTime == null) return 1;
-        if (bTime == null) return -1;
-        return bTime.compareTo(aTime);
-      });
+      // Shuffle randomly so that every refresh feels new and randomized
+      all.shuffle();
 
       if (mounted) {
         FavoritesService.cachePrompts(all);
@@ -276,7 +342,7 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
       return type != 'trending' && category != 'trending';
     }).toList();
 
-    return RefreshIndicator(
+    final mainWidget = RefreshIndicator(
       color: const Color(0xFFFF0000),
       onRefresh: _fetchAll,
       child: Column(
@@ -301,18 +367,7 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
                         final target = cat.toLowerCase();
                         return type == target || category == target;
                       }).toList();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CategoryPromptsScreen(
-                            categoryName: cat,
-                            docs: categoryDocs,
-                            favorites: widget.favorites,
-                            onToggleFavorite: widget.onToggleFavorite,
-                            onRefreshFavorites: widget.onRefreshFavorites,
-                          ),
-                        ),
-                      );
+                      _handleCategoryClickWithAd(cat, categoryDocs);
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
@@ -406,6 +461,51 @@ class _PromptGridLoaderState extends State<_PromptGridLoader> {
           ),
         ],
       ),
+    );
+
+    return Stack(
+      children: [
+        mainWidget,
+        if (_isLoadingAd)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black54,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1C1C1C) : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF0000)),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Loading Ad...',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -623,39 +723,38 @@ class PromptCard extends StatelessWidget {
           children: [
             // ── Image ──
             if (imageUrl.isNotEmpty)
-              AspectRatio(
-                aspectRatio: 1.0,
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (ctx, child, progress) {
-                    if (progress == null) return child;
-                    return Container(
-                      color: isDark
-                          ? const Color(0xFF2A2A2A)
-                          : Colors.grey[100],
-                      child: const Center(
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1.5,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                                Color(0xFFFF0000)),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                  errorBuilder: (ctx, err, st) => Container(
+              Image.network(
+                imageUrl,
+                width: double.infinity,
+                fit: BoxFit.fitWidth,
+                loadingBuilder: (ctx, child, progress) {
+                  if (progress == null) return child;
+                  return Container(
                     color: isDark
                         ? const Color(0xFF2A2A2A)
-                        : Colors.grey[200],
-                    height: 120,
+                        : Colors.grey[100],
+                    padding: const EdgeInsets.symmetric(vertical: 30),
                     child: const Center(
-                      child: Icon(Icons.broken_image_outlined,
-                          color: Colors.grey, size: 28),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1.5,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFFFF0000)),
+                        ),
+                      ),
                     ),
+                  );
+                },
+                errorBuilder: (ctx, err, st) => Container(
+                  color: isDark
+                      ? const Color(0xFF2A2A2A)
+                      : Colors.grey[200],
+                  padding: const EdgeInsets.symmetric(vertical: 30),
+                  child: const Center(
+                    child: Icon(Icons.broken_image_outlined,
+                        color: Colors.grey, size: 28),
                   ),
                 ),
               )
