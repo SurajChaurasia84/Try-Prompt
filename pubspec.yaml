@@ -2,7 +2,7 @@ name: tryprompt
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 2.2.0+2
+version: 2.2.1+5
 
 environment:
   sdk: ^3.10.4
